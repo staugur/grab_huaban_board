@@ -64,7 +64,7 @@ def GetBoard(board):
         print "ajax get %s pins, last pin is %s, merged" %(len(_pins), pins[-1])
         _pins= [ _[-1] for _ in re.findall(pat, data) if _[-1] ]
         pins += _pins
-        if len(_pins) < limit:
+        if len(_pins) == 0:
             break
     print "Current pins is %d" %len(pins)
     num = 1
