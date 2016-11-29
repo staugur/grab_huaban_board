@@ -76,7 +76,7 @@ def GetBoard(board):
         else:
             print "miss one"
     else:
-        return "no pins again, over" 
+        return "no pins again, over, now download %s pin, all is %s"  %(len(pins), allimages)
 
 if __name__ == "__main__":
     import argparse
