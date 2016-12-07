@@ -2,14 +2,15 @@
 # -*- coding: utf8 -*-
 
 __version__ = "2.0"
-__author__ = "Mr.tao"
+__author__  = "Mr.tao"
 
 import requests,re,sys,os,logging
+from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool as ThreadPool 
 
 logging.basicConfig(level=logging.DEBUG,
-                format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-                datefmt='%a, %d %b %Y %H:%M:%S',
+                format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(lineno)d %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S',
                 filename='huaban.log',
                 filemode='a')
 headers     = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36", "Referer": 'https://www.saintic.com/'}
@@ -53,7 +54,7 @@ def GetTitleImageNum():
     data = requests.get(url, timeout=15, verify=False, headers=headers).text.encode('utf-8')
     return re.findall(title_pat, data)[0]
 
-def GetBoard(processes=4):
+def GetBoard(processes):
     print "Current boards pins number is %s" %GetTitleImageNum()
     #get first pin data
     url  = "http://huaban.com/boards/%s/?limit=100" % board
@@ -61,7 +62,7 @@ def GetBoard(processes=4):
     pins = [ _[-1] for _ in re.findall(pin_pat, data) if _[-1] ]
     while 1:
         #get ajax pin data
-        url  = "http://huaban.com/boards/%s/?max=%s&limit=100&wfl=1" %(board, pins[-1])
+        url = "http://huaban.com/boards/%s/?max=%s&limit=100&wfl=1" %(board, pins[-1])
         try:
             data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
         except requests.exceptions.ReadTimeout,e:
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     args       = parser.parse_args()
     board      = args.board
     version    = args.version
-    processes  = args.processes or 4
+    processes  = args.processes or cpu_count()
     if version:
         print "From https://github.com/staugur/grab_huaban_board,", __version__
     if board:
