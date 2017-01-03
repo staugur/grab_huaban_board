@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "2.0"
+__version__ = "3.0"
 __author__  = "Mr.tao"
 
 import requests,re,sys,os,logging
@@ -80,10 +80,18 @@ def GetBoard(processes):
     pool.join()
     print "Download number:",len(data)
 
+def main(boards, processes):
+    """ Entrance """
+    #check params
+    if isinstance(boards, (list, tuple)) and isinstance(processes, int):
+        pass
+    else:
+        return "Params Error"
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--board", help="The board id for Huanban.com", type=int)
+    parser.add_argument("-b", "--board", help="The board id for Huanban.com")
     parser.add_argument("-v", "--version", help="The version for grab_huaban_board project", action='store_true')
     parser.add_argument("-p", "--processes", help="Concurrent number", type=int)
     args       = parser.parse_args()
@@ -92,5 +100,7 @@ if __name__ == "__main__":
     processes  = args.processes or cpu_count()
     if version:
         print "From https://github.com/staugur/grab_huaban_board,", __version__
-    if board:
-        GetBoard(processes=processes)
+    elif board:
+        print main(boards=board.split(","), processes=processes)
+    else:
+        parser.print_help()
