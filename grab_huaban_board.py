@@ -35,7 +35,7 @@ def print_header(msg):
 
 def MkdirBoard(board):
     """ 创建名为board的画板目录 """
-    logger.debug("{}, start to mkdir a directory".format(board))
+    logging.debug("{}, start to mkdir a directory".format(board))
     DIR = os.path.join(BOARDS_BASEDIR, str(board))
     if not os.path.exists(DIR):
         os.mkdir(DIR)
@@ -46,7 +46,7 @@ def MkdirBoard(board):
 
 def BoardGetTitleImageNum(board):
     """ 查询画板的pin数量 """
-    logger.debug("{}, start to get the title number".format(board))
+    logging.debug("{}, start to get the title number".format(board))
     url  = "http://huaban.com/boards/%s/" %(board)
     data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
     title= re.findall(title_pat, data)[0]
@@ -55,7 +55,7 @@ def BoardGetTitleImageNum(board):
 
 def BoardGetPins(board):
     """ 获取画板下所有pin """
-    logger.debug("{}, start to get the pins data".format(board))
+    logging.debug("{}, start to get the pins data".format(board))
     #get first pin data
     url  = "http://huaban.com/boards/%s/?limit=100" % board
     data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
@@ -78,7 +78,7 @@ def BoardGetPins(board):
 
 def DownloadPinImg(pin):
     """ 下载单个pin图片 """
-    logger.debug("{}, start to download itself".format(pin))
+    logging.debug("{}, start to download itself".format(pin))
     url = "http://huaban.com/pins/%s/" %pin
     try:
         r = requests.get(url, timeout=15, verify=False, headers=headers)
@@ -114,18 +114,16 @@ def ExecuteDownloadPins(pins, processes):
 
 def ExecuteDownloadBoard(board, processes):
     """ 执行下载：抓取花瓣网某画板 """
-    logger.debug("{}, start to download the board with processes={}".format(board, processes))
+    logging.debug("{}, start to download the board with processes={}".format(board, processes))
     if isinstance(board, int) and isinstance(processes, int):
         os.chdir(BOARDS_BASEDIR)
         if MkdirBoard(board):
-            print_header("Current board pins number is {}".format(BoardGetTitleImageNum(board)))
+            os.chdir(os.path.join(BOARDS_BASEDIR, str(board)))
+            print_header("Current board pins number that title is {}".format(BoardGetTitleImageNum(board)))
             pins = BoardGetPins(board)
             print_blue("Current board pins number that requests is {}, will ExecuteDownloadPins".format(len(pins)))
             resp = ExecuteDownloadPins(pins, processes)
-            for _ in resp:
-                print_green(_)
-            else:
-                print_green("Current board download number is {}".format(len(resp)))
+            print_green("Current board download number is {}".format(len(resp)))
         else:
             print_yellow("mkdir {} failed".format(board))
     else:
@@ -147,7 +145,7 @@ if __name__ == "__main__":
         boards = board.split(",")
         worker = []
         for board in boards:
-            p = Process(target=ExecuteDownloadBoard, args=(board, processes), name="grab.{}.huaban".format(board))
+            p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.{}.huaban".format(board))
             p.daemon=True
             worker.append(p)
         for p in worker:
