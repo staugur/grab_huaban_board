@@ -3,59 +3,59 @@
 
 __version__ = "3.0"
 __author__  = "Mr.tao"
+__doc__     = "http://www.saintic.com/blog/204.html"
 
-import requests,re,sys,os,logging
-from multiprocessing import cpu_count
-from multiprocessing.dummy import Pool as ThreadPool 
+import requests, re, os, logging
+from multiprocessing import cpu_count, Process
+from multiprocessing.dummy import Pool as ThreadPool
 
 logging.basicConfig(level=logging.DEBUG,
                 format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(lineno)d %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S',
                 filename='huaban.log',
                 filemode='a')
-headers     = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36", "Referer": 'https://www.saintic.com/'}
-title_pat   = re.compile(r'<title>.*\((\d+).*\).*</title>')
-pin_pat     = re.compile(r'("pin_id":)(\w*)')
-pindata_pat = re.compile('"pin_id":(.*?),.+?"key":"(.*?)",.+?"type":"image/(.*?)"', re.S)
+headers        = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36", "Referer": 'https://www.saintic.com/'}
+title_pat      = re.compile(r'<title>.*\((\d+).*\).*</title>')
+pin_pat        = re.compile(r'("pin_id":)(\w*)')
+pindata_pat    = re.compile('"pin_id":(.*?),.+?"key":"(.*?)",.+?"type":"image/(.*?)"', re.S)
+BOARDS_BASEDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boards")
+if not os.path.exists(BOARDS_BASEDIR):os.mkdir(BOARDS_BASEDIR)
 
-def GetPinImg(pin):
-    url = "http://huaban.com/pins/%s/" %pin
-    try:
-        r = requests.get(url, timeout=15, verify=False, headers=headers)
-    except Exception,e:
-        logging.error(e, exc_info=True)
-        return
-    try:
-        data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-8].split('},')[0])[0]
-        HtmlPin, QianNiuKey, ImgType = data
-        logging.info((HtmlPin,QianNiuKey, len(QianNiuKey), ImgType))
-    except Exception,e:
-        logging.exception(e, exc_info=True)
+def print_green(msg):
+    print '\033[92m{}\033[0m'.format(str(msg))
+
+def print_blue(msg):
+    print '\033[94m{}\033[0m'.format(str(msg))
+
+def print_yellow(msg):
+    print '\033[93m{}\033[0m'.format(str(msg))
+
+def print_header(msg):
+    print '\033[95m{}\033[0m'.format(str(msg))
+
+def MkdirBoard(board):
+    """ 创建名为board的画板目录 """
+    logger.debug("{}, start to mkdir a directory".format(board))
+    DIR = os.path.join(BOARDS_BASEDIR, str(board))
+    if not os.path.exists(DIR):
+        os.mkdir(DIR)
+    if os.path.exists(DIR):
+        return True
     else:
-        if HtmlPin == pin:
-            ImgUrl = "http://img.hb.aicdn.com/%s_fw658" %QianNiuKey
-            try:
-                headers.update(Referer=url)
-                req = requests.get(ImgUrl, timeout=10, verify=False, headers=headers)
-            except Exception,e:
-                logging.warn(e, exc_info=True)
-            else:
-                if not os.path.exists(str(board)):
-                   os.mkdir(str(board))
-                imageName = os.path.join(str(board), pin + "." + ImgType)
-                with open(imageName, 'wb') as fp:
-                    fp.write(req.content)
-                print "Successful, board: %s, pin: %s, save as %s" %(board, pin, imageName)
-        else:
-            print "Board: %s, pin: %s, download error" %(board, pin)
+        return False
 
-def GetTitleImageNum():
+def BoardGetTitleImageNum(board):
+    """ 查询画板的pin数量 """
+    logger.debug("{}, start to get the title number".format(board))
     url  = "http://huaban.com/boards/%s/" %(board)
-    data = requests.get(url, timeout=15, verify=False, headers=headers).text.encode('utf-8')
-    return re.findall(title_pat, data)[0]
+    data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
+    title= re.findall(title_pat, data)[0]
+    logging.info(title)
+    return title
 
-def GetBoard(processes):
-    print "Current boards pins number is %s" %GetTitleImageNum()
+def BoardGetPins(board):
+    """ 获取画板下所有pin """
+    logger.debug("{}, start to get the pins data".format(board))
     #get first pin data
     url  = "http://huaban.com/boards/%s/?limit=100" % board
     data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
@@ -67,26 +67,69 @@ def GetBoard(processes):
             data = requests.get(url, timeout=10, verify=False, headers=headers).text.encode('utf-8')
         except requests.exceptions.ReadTimeout,e:
             logging.exception(e, exc_info=True)
+            continue
         else:
-            _pins= [ _[-1] for _ in re.findall(pin_pat, data) if _[-1] ]
+            _pins = [ _[-1] for _ in re.findall(pin_pat, data) if _[-1] ]
             pins += _pins
-            print "ajax get %s pins, last pin is %s, merged" %(len(_pins), pins[-1])
+            print_blue("ajax get {} pins, last pin is {}, merged".format(len(_pins), pins[-1]))
             if len(_pins) == 0:
                 break
-    print "Current pins for %s is %d" % (board, len(pins))
+    return pins
+
+def DownloadPinImg(pin):
+    """ 下载单个pin图片 """
+    logger.debug("{}, start to download itself".format(pin))
+    url = "http://huaban.com/pins/%s/" %pin
+    try:
+        r = requests.get(url, timeout=15, verify=False, headers=headers)
+        data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-8].split('},')[0])[0]
+        HtmlPin, QianNiuKey, ImgType = data
+        logging.info((HtmlPin,QianNiuKey, len(QianNiuKey), ImgType))
+    except Exception,e:
+        logging.error(e, exc_info=True)
+        return False
+    else:
+        if HtmlPin == pin:
+            ImgUrl = "http://img.hb.aicdn.com/%s_fw658" %QianNiuKey
+            try:
+                headers.update(Referer=url)
+                req = requests.get(ImgUrl, timeout=10, verify=False, headers=headers)
+            except Exception,e:
+                logging.warn(e, exc_info=True)
+            else:
+                imageName = "{}.{}".format(pin, ImgType)
+                with open(imageName, 'wb') as fp:
+                    fp.write(req.content)
+                print "Successful, pin: {}, save as {}".format(pin, imageName)
+        else:
+            print "Failed download, pin: {}".format(pin)
+
+def ExecuteDownloadPins(pins, processes):
+    """ 并发processes个线程下载所有pins """
     pool = ThreadPool(processes=processes)
-    data = pool.map(GetPinImg, pins)
+    data = pool.map(DownloadPinImg, pins)
     pool.close()
     pool.join()
-    print "Download number:",len(data)
+    return data
 
-def main(boards, processes):
-    """ Entrance """
-    #check params
-    if isinstance(boards, (list, tuple)) and isinstance(processes, int):
-        pass
+def ExecuteDownloadBoard(board, processes):
+    """ 执行下载：抓取花瓣网某画板 """
+    logger.debug("{}, start to download the board with processes={}".format(board, processes))
+    if isinstance(board, int) and isinstance(processes, int):
+        os.chdir(BOARDS_BASEDIR)
+        if MkdirBoard(board):
+            print_header("Current board pins number is {}".format(BoardGetTitleImageNum(board)))
+            pins = BoardGetPins(board)
+            print_blue("Current board pins number that requests is {}, will ExecuteDownloadPins".format(len(pins)))
+            resp = ExecuteDownloadPins(pins, processes)
+            for _ in resp:
+                print_green(_)
+            else:
+                print_green("Current board download number is {}".format(len(resp)))
+        else:
+            print_yellow("mkdir {} failed".format(board))
     else:
-        return "Params Error"
+        print "Params Error"
 
 if __name__ == "__main__":
     import argparse
@@ -101,6 +144,15 @@ if __name__ == "__main__":
     if version:
         print "From https://github.com/staugur/grab_huaban_board,", __version__
     elif board:
-        print main(boards=board.split(","), processes=processes)
+        boards = board.split(",")
+        worker = []
+        for board in boards:
+            p = Process(target=ExecuteDownloadBoard, args=(board, processes), name="grab.{}.huaban".format(board))
+            p.daemon=True
+            worker.append(p)
+        for p in worker:
+            p.start()
+        for p in worker:
+            p.join()
     else:
         parser.print_help()
