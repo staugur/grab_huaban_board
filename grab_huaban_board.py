@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "3.0"
+__version__ = "4.0"
 __author__  = "Mr.tao"
 __doc__     = "http://www.saintic.com/blog/204.html"
 
