@@ -10,7 +10,7 @@ from multiprocessing import cpu_count, Process
 from multiprocessing.dummy import Pool as ThreadPool
 
 logging.basicConfig(level=logging.DEBUG,
-                format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(lineno)d %(message)s',
+                format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S',
                 filename='huaban.log',
                 filemode='a')
@@ -119,11 +119,11 @@ def ExecuteDownloadBoard(board, processes):
         os.chdir(BOARDS_BASEDIR)
         if MkdirBoard(board):
             os.chdir(os.path.join(BOARDS_BASEDIR, str(board)))
-            print_header("Current board pins number that title is {}".format(BoardGetTitleImageNum(board)))
+            print_header("Current board <{}> pins number that title is {}".format(board, BoardGetTitleImageNum(board)))
             pins = BoardGetPins(board)
-            print_blue("Current board pins number that requests is {}, will ExecuteDownloadPins".format(len(pins)))
+            print_blue("Current board {} pins number that requests is {}, will ExecuteDownloadPins".format(board, len(pins)))
             resp = ExecuteDownloadPins(pins, processes)
-            print_green("Current board download number is {}".format(len(resp)))
+            print_green("Current board {} download number is {}".format(board, len(resp)))
         else:
             print_yellow("mkdir {} failed".format(board))
     else:
