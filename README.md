@@ -3,7 +3,7 @@
 
 ## Usage
 ```
-1. pip install -r requirements.txt
+1. pip install requests
 2. python grab_huaban_board.py -b 花瓣网画板ID1,ID2,IDn... -p 线程数量(默认为CPU颗数)
 
 ```

@@ -87,7 +87,6 @@ def DownloadPinImg(pin):
         logging.info((HtmlPin,QianNiuKey, len(QianNiuKey), ImgType))
     except Exception,e:
         logging.error(e, exc_info=True)
-        return False
     else:
         if HtmlPin == pin:
             ImgUrl = "http://img.hb.aicdn.com/%s_fw658" %QianNiuKey
@@ -101,8 +100,10 @@ def DownloadPinImg(pin):
                 with open(imageName, 'wb') as fp:
                     fp.write(req.content)
                 print "Successful, pin: {}, save as {}".format(pin, imageName)
+                return True
         else:
             print "Failed download, pin: {}".format(pin)
+    return False
 
 def ExecuteDownloadPins(pins, processes):
     """ 并发processes个线程下载所有pins """
@@ -123,7 +124,7 @@ def ExecuteDownloadBoard(board, processes):
             pins = BoardGetPins(board)
             print_blue("Current board {} pins number that requests is {}, will ExecuteDownloadPins".format(board, len(pins)))
             resp = ExecuteDownloadPins(pins, processes)
-            print_green("Current board {} download number is {}".format(board, len(resp)))
+            print_green("Current board {} download number is {}".format(board, len([ _ for _ in resp if _ == True ])))
         else:
             print_yellow("mkdir {} failed".format(board))
     else:
