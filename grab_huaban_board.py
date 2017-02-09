@@ -18,7 +18,6 @@ headers        = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 title_pat      = re.compile(r'<title>.*\((\d+).*\).*</title>')
 pin_pat        = re.compile(r'("pin_id":)(\w*)')
 pindata_pat    = re.compile('"pin_id":(.*?),.+?"key":"(.*?)",.+?"type":"image/(.*?)"', re.S)
-BASEDIR        = os.path.dirname(os.path.abspath(__file__))
 
 
 def print_green(msg):
@@ -33,26 +32,11 @@ def print_yellow(msg):
 def print_header(msg):
     print '\033[95m{}\033[0m'.format(str(msg))
 
-def MkdirUser(user):
-    """ 创建名为user的画板目录 """
-    logging.debug("user {}, start to mkdir a directory".format(user))
-
-    DIR = os.path.join(BASEDIR, "users", str(user))
-    if not os.path.exists(DIR):
-        os.makedirs(DIR)
-    if os.path.exists(DIR):
-        return True
-    else:
-        return False
-
-def MkdirBoard(board):
-    """ 创建名为board的画板目录 """
-    logging.debug("board {}, start to mkdir a directory".format(board))
-
-    DIR = os.path.join(BASEDIR, "boards", str(board))
-    if not os.path.exists(DIR):
-        os.makedirs(DIR)
-    if os.path.exists(DIR):
+def Mkdir(d):
+    d = str(d)
+    if not os.path.exists(d):
+        os.makedirs(d)
+    if os.path.exists(d):
         return True
     else:
         return False
@@ -150,10 +134,10 @@ def ExecuteDownloadBoard(board, processes):
     """ 执行下载：抓取花瓣网某画板图片 """
     logging.debug("{}, start to download the board with processes={}".format(board, processes))
 
-    logging.debug("Define board dir is {}, Current Dir is {}".format(os.path.join(BASEDIR, "boards", str(board)), os.path.dirname(os.path.abspath(__file__))))
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
     if isinstance(board, int) and isinstance(processes, int):
-        if MkdirBoard(board):
-            os.chdir(os.path.join(BASEDIR, "boards", str(board)))
+        if Mkdir(board):
+            os.chdir(str(board))
             print_header("Current board <{}> pins number that title is {}".format(board, BoardGetTitleImageNum(board)))
             pins = BoardGetPins(board)
             print_blue("Current board {} pins number that requests is {}, will ExecuteDownloadPins".format(board, len(pins)))
@@ -163,40 +147,50 @@ def ExecuteDownloadBoard(board, processes):
             print_yellow("mkdir failed for {}".format(board))
     else:
         print "Params Error"
+    os.chdir(_base_dir)
 
 def ExecuteDownloadUser(user, processes):
     """ 执行下载：抓取花瓣网某用户所有画板 """
     logging.debug("{}, start to download the user board with processes={}".format(user, processes))
 
     boards = GetUserBoards(user)
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
     logging.info("query user boards, the number is {}, data is {}".format(len(boards), boards))
-    if boards and MkdirUser(user):
-        os.chdir(os.path.join(BASEDIR, "users", str(user)))
-        worker = []
-        for board in boards:
-            p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.user.board.{}.huaban".format(board))
-            p.daemon=True
-            worker.append(p)
-        for p in worker: p.start()
-        for p in worker: p.join()
+    if boards:
+        if Mkdir(user):
+            os.chdir(user)
+            worker = []
+            for board in boards:
+                p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.user.board.{}.huaban".format(board))
+                #p.daemon=True
+                worker.append(p)
+            for p in worker: p.start()
+            for p in worker: p.join()
+        else:
+            return "mkdir failed for user {}".format(user)
     else:
-        return "No board or mkdir failed for user {}".format(user)
+        return "No boards data"
+    os.chdir(_base_dir)
 
 def main(users=None, boards=None, processes=6):
     """ 引导函数 """
     if users:
+        Mkdir("users")
+        os.chdir("users")
         worker = []
         for user in users:
-            p = Process(target=ExecuteDownloadUser, args=(int(user), int(processes)), name="grab.user.{}.huaban".format(user))
-            p.daemon=True
+            p = Process(target=ExecuteDownloadUser, args=(user, int(processes)), name="grab.user.{}.huaban".format(user))
+            #p.daemon=True
             worker.append(p)
         for p in worker: p.start()
         for p in worker: p.join()
     elif boards:
+        Mkdir("boards")
+        os.chdir("boards")
         worker = []
         for board in boards:
             p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.board.{}.huaban".format(board))
-            p.daemon=True
+            #p.daemon=True
             worker.append(p)
         for p in worker: p.start()
         for p in worker: p.join()
