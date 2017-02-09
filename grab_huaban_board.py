@@ -5,7 +5,7 @@ __version__ = "4.0"
 __author__  = "Mr.tao"
 __doc__     = "http://www.saintic.com/blog/204.html"
 
-import requests, re, os, logging
+import requests, re, os, logging, json
 from multiprocessing import cpu_count, Process
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -18,8 +18,8 @@ headers        = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 title_pat      = re.compile(r'<title>.*\((\d+).*\).*</title>')
 pin_pat        = re.compile(r'("pin_id":)(\w*)')
 pindata_pat    = re.compile('"pin_id":(.*?),.+?"key":"(.*?)",.+?"type":"image/(.*?)"', re.S)
-BOARDS_BASEDIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "boards")
-if not os.path.exists(BOARDS_BASEDIR):os.mkdir(BOARDS_BASEDIR)
+BASEDIR        = os.path.dirname(os.path.abspath(__file__))
+
 
 def print_green(msg):
     print '\033[92m{}\033[0m'.format(str(msg))
@@ -33,12 +33,25 @@ def print_yellow(msg):
 def print_header(msg):
     print '\033[95m{}\033[0m'.format(str(msg))
 
+def MkdirUser(user):
+    """ 创建名为user的画板目录 """
+    logging.debug("user {}, start to mkdir a directory".format(user))
+
+    DIR = os.path.join(BASEDIR, "users", str(user))
+    if not os.path.exists(DIR):
+        os.makedirs(DIR)
+    if os.path.exists(DIR):
+        return True
+    else:
+        return False
+
 def MkdirBoard(board):
     """ 创建名为board的画板目录 """
-    logging.debug("{}, start to mkdir a directory".format(board))
-    DIR = os.path.join(BOARDS_BASEDIR, str(board))
+    logging.debug("board {}, start to mkdir a directory".format(board))
+
+    DIR = os.path.join(BASEDIR, "boards", str(board))
     if not os.path.exists(DIR):
-        os.mkdir(DIR)
+        os.makedirs(DIR)
     if os.path.exists(DIR):
         return True
     else:
@@ -113,22 +126,80 @@ def ExecuteDownloadPins(pins, processes):
     pool.join()
     return data
 
+def GetUserBoards(user, limit=500):
+    """ 查询user的画板 """
+
+    try:
+        r = requests.get("http://huaban.com/{}/?limit={}".format(user, limit))
+    except Exception,e:
+        logging.error(e, exc_info=True)
+    else:
+        if r.status_code == 200:
+            try:
+                data =json.loads(r.text.split('app.page["user"] = ')[-1].split("app.route();")[0].split("app._csr")[0].strip(";\n"))
+            except Exception,e:
+                logging.error(e, exc_info=True)
+            else:
+                boards = [ _.get("board_id") for _ in data.get("boards") ]
+                logging.info("query user boards is {}".format(boards))
+                return boards
+        else:
+            return print_yellow("No such user {}".format(user))
+
 def ExecuteDownloadBoard(board, processes):
-    """ 执行下载：抓取花瓣网某画板 """
+    """ 执行下载：抓取花瓣网某画板图片 """
     logging.debug("{}, start to download the board with processes={}".format(board, processes))
+
+    logging.debug("Define board dir is {}, Current Dir is {}".format(os.path.join(BASEDIR, "boards", str(board)), os.path.dirname(os.path.abspath(__file__))))
     if isinstance(board, int) and isinstance(processes, int):
-        os.chdir(BOARDS_BASEDIR)
         if MkdirBoard(board):
-            os.chdir(os.path.join(BOARDS_BASEDIR, str(board)))
+            os.chdir(os.path.join(BASEDIR, "boards", str(board)))
             print_header("Current board <{}> pins number that title is {}".format(board, BoardGetTitleImageNum(board)))
             pins = BoardGetPins(board)
             print_blue("Current board {} pins number that requests is {}, will ExecuteDownloadPins".format(board, len(pins)))
             resp = ExecuteDownloadPins(pins, processes)
             print_green("Current board {} download number is {}".format(board, len([ _ for _ in resp if _ == True ])))
         else:
-            print_yellow("mkdir {} failed".format(board))
+            print_yellow("mkdir failed for {}".format(board))
     else:
         print "Params Error"
+
+def ExecuteDownloadUser(user, processes):
+    """ 执行下载：抓取花瓣网某用户所有画板 """
+    logging.debug("{}, start to download the user board with processes={}".format(user, processes))
+
+    boards = GetUserBoards(user)
+    logging.info("query user boards, the number is {}, data is {}".format(len(boards), boards))
+    if boards and MkdirUser(user):
+        os.chdir(os.path.join(BASEDIR, "users", str(user)))
+        worker = []
+        for board in boards:
+            p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.user.board.{}.huaban".format(board))
+            p.daemon=True
+            worker.append(p)
+        for p in worker: p.start()
+        for p in worker: p.join()
+    else:
+        return "No board or mkdir failed for user {}".format(user)
+
+def main(users=None, boards=None, processes=6):
+    """ 引导函数 """
+    if users:
+        worker = []
+        for user in users:
+            p = Process(target=ExecuteDownloadUser, args=(int(user), int(processes)), name="grab.user.{}.huaban".format(user))
+            p.daemon=True
+            worker.append(p)
+        for p in worker: p.start()
+        for p in worker: p.join()
+    elif boards:
+        worker = []
+        for board in boards:
+            p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.board.{}.huaban".format(board))
+            p.daemon=True
+            worker.append(p)
+        for p in worker: p.start()
+        for p in worker: p.join()
 
 if __name__ == "__main__":
     import argparse
@@ -136,22 +207,20 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--board", help="The board id for Huanban.com")
     parser.add_argument("-v", "--version", help="The version for grab_huaban_board project", action='store_true')
     parser.add_argument("-p", "--processes", help="Concurrent number", type=int)
+    parser.add_argument("-u", "--user", help="The user for Huanban.com")
     args       = parser.parse_args()
+    user       = args.user
     board      = args.board
     version    = args.version
     processes  = args.processes or cpu_count()
+
     if version:
         print "From https://github.com/staugur/grab_huaban_board,", __version__
+    elif user:
+        users = user.split(",")
+        main(users=users, processes=processes)
     elif board:
         boards = board.split(",")
-        worker = []
-        for board in boards:
-            p = Process(target=ExecuteDownloadBoard, args=(int(board), int(processes)), name="grab.{}.huaban".format(board))
-            p.daemon=True
-            worker.append(p)
-        for p in worker:
-            p.start()
-        for p in worker:
-            p.join()
+        main(boards=boards, processes=processes)
     else:
         parser.print_help()
