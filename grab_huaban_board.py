@@ -110,8 +110,8 @@ def ExecuteDownloadPins(pins, processes):
     pool.join()
     return data
 
-def GetUserBoards(user, limit=500):
-    """ 查询user的画板 """
+def GetUserBoards(user, limit=10):
+    """ 查询user的画板, 默认limit=10, 表示最多下载10个画板, 虽然可能会下载不全, 但是此值不宜过大, 每个画板下载会开启一个进程, 过大会使系统崩溃 """
 
     try:
         r = requests.get("http://huaban.com/{}/?limit={}".format(user, limit))
