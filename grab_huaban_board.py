@@ -81,6 +81,10 @@ def DownloadPinImg(pin):
         r = requests.get(url, timeout=15, verify=False, headers=headers)
         data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-8].split('},')[0])[0]
         HtmlPin, QianNiuKey, ImgType = data
+        # 有部分返回头返回的格式不标准，例如有 "jpeg,image/gif" ( -b 30628524 )，无法根据返回头创建文件，因此需要过滤
+        # by mingcheng 2017-02-27
+        if len(ImgType.split(",")) > 1:
+            ImgType = ImgType.split(",")[0]
         logging.info((HtmlPin,QianNiuKey, len(QianNiuKey), ImgType))
     except Exception,e:
         logging.error(e, exc_info=True)
