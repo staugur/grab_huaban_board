@@ -79,7 +79,7 @@ def DownloadPinImg(pin):
     url = "http://huaban.com/pins/%s/" %pin
     try:
         r = requests.get(url, timeout=15, verify=False, headers=headers)
-        data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-8].split('},')[0])[0]
+        data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-9].split('},')[0])[0]
         HtmlPin, QianNiuKey, ImgType = data
         # 有部分返回头返回的格式不标准，例如有 "jpeg,image/gif" ( -b 30628524 )，无法根据返回头创建文件，因此需要过滤
         # by mingcheng 2017-02-27
