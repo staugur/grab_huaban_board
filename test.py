@@ -5,15 +5,21 @@ __version__ = "5.0"
 __author__  = "Mr.tao"
 __doc__     = "http://www.saintic.com/blog/204.html"
 
-import requests, re, os, logging, json
+import re, os, sys, json, logging, requests
+from multiprocessing import Pool as ProcessPool
+from multiprocessing.dummy import Pool as ThreadPool
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 logging.basicConfig(level=logging.INFO,
                 format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S',
                 filename='huaban.log',
                 filemode='a')
-headers = {'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'https://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36', 'Accept':'application/json'}
-cookies = {'__auc': '5c92e06816382f2863d83418ac5', '_cnzz_CV1256903590': 'is-logon%7Clogged-out%7C1526910323204', '_ga': 'GA1.2.1856651272.1526910322', '__asc': '5c92e06816382f2863d83418ac5', '_uab_collina': '152691032203679580118984', 'sid': 'f5nNZXSX9rLn8NTCiWZrqSGQ7jK.5dHZKijSwjNmBYC0jKEiDDTQ7dUcBUA08%2BUbdhA5%2Fj8', '_f': 'iVBORw0KGgoAAAANSUhEUgAAADIAAAAUCAYAAADPym6aAAABJElEQVRYR%2B1VOxYCIQwMF7KzsvFGXmW9kY2VnQfxCvgCRmfzCD9lnz53myWQAJOZBEfeeyIi7xz%2FyEXzZRPFhYbPc3hHXO6I6TbFixmfEyByeQQSxu6BcAXSkIGMazMjuBcz8pQcq44o0Iuyyc1p38C62kNsOdeSZDOQlLRQ80uOMalDgWCGMfsW2B5%2FATMUyGh2uhgptV9Ly6l5nNOa1%2F6zmjTqkH2aGEk2jY72%2B5k%2BNd9lBfLMh8GIP11iK95vw8uv7RQr4oNxOfbQ%2F7g5Z4meveyt0uKDEIiMLRC4jrG1%2FjkwKxCRE2e5lF30leyXYvQ628MZKV3q64HUFvnPAMkVuSWlEouLSiuV6dp2WtPBrPZ7uO5I18tbXWvEC27t%2BTcv%2Bx0JuJAoUm2L%2FQAAAABJRU5ErkJggg%3D%3D%2CWin32.1536.864.24', 'UM_distinctid': '16382f2861854d-0afc08f752cd6d-737356c-144000-16382f2861972b', 'CNZZDATA1256903590': '1742071242-1526906615-%7C1526906615'}
+debug = False
+basedir = os.path.dirname(os.path.abspath(__file__))
+request = requests.Session()
+request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'http://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36', 'Accept':'application/json'})
 
 def printcolor(msg, color=None):
     if color == "green":
@@ -27,7 +33,7 @@ def printcolor(msg, color=None):
     else:
         print str(msg)
 
-def Mkdir(d):
+def makedir(d):
     d = str(d)
     if not os.path.exists(d):
         os.makedirs(d)
@@ -36,96 +42,178 @@ def Mkdir(d):
     else:
         return False
 
-def BoardGetPins(board_id):
+def _post_login(email, password):
+    """登录函数"""
+    res = dict(success=False)
+    url = "https://huaban.com/auth/"
+    try:
+        resp = request.post(url, data=dict(email=email, password=password), headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}).json()
+    except Exception,e:
+        logging.error(e, exc_info=True)
+    else:
+        if "user" in resp:
+            # 登录成功
+            res.update(success=True, data=resp["user"])
+        else:
+            res.update(resp)
+    return res
+
+def _download_img(pin, retry=True):
+    """ 下载单个图片
+    @param pin dict: pin的数据，要求： {'pin_id': xx, 'suffix': u'png|jpg|jpeg...', 'key': u'xxx-xx', 'board_id': xx}
+    @param retry bool: 是否失败重试
+    """
+    if pin and isinstance(pin, dict) and "pin_id" in pin and "suffix" in pin and "key" in pin and "board_id" in pin:
+        imgurl = "http://img.hb.aicdn.com/{}_fw658".format(pin["key"])
+        imgdir = os.path.join(basedir, pin['board_id'])
+        imgname = os.path.join(imgdir, '{}.{}'.format(pin["pin_id"], pin["suffix"]))
+        if os.path.isfile(imgname):
+            return
+        try:
+            makedir(imgdir)
+            req = request.get(imgurl)
+            with open(imgname, 'wb') as fp:
+                fp.write(req.content)
+        except Exception,e:
+            logging.warn(e, exc_info=True)
+            if retry is True:
+                _download_img(pin, False)
+            else:
+                printcolor("Failed download for {}".format(imgurl), "yellow")
+        else:
+            if debug:
+                printcolor("Successful download for {}, save as {}".format(pin["pin_id"], imgname), "blue")
+
+def _crawl_board(board_id):
     """ 获取画板下所有pin """
-    board_url = 'https://huaban.com/boards/{}/'.format(board_id)
+    if not board_id:
+        return
+    retry = limit = 100
+    board_url = 'http://huaban.com/boards/{}/'.format(board_id)
     try:
         #get first pin data
-        board_data = requests.get(board_url, headers=headers).json()["board"]
+        r = request.get(board_url).json()
     except Exception,e:
         logging.error(e, exc_info=True)
     else:
-        board_number = board_data["pin_count"]
+        if "board" in r:
+            board_data = r["board"]
+        else:
+            print r.get("msg")
+            return
+        pin_number = board_data["pin_count"]
         board_pins = board_data["pins"]
-        while 1:
-            #get ajax pin data
-            board_next_url = "https://huaban.com/boards/%s/?max=%s&limit=100&wfl=1" %(board_id, board_pins[-1])
-            try:
-                board_next_data = requests.get(board_next_url, headers=headers).json()["board"]
-            except Exception,e:
-                logging.error(e, exc_info=True)
-                continue
-            else:
-                board_pins += board_next_data["pins"]
-                printcolor("ajax get {} pins, last pin is {}, merged".format(len(board_next_data["pins"]), board_next_data["pins"][-1]["pin_id"]), "blue")
-                if len(board_next_data["pins"]) == 0:
-                    break
-        return board_pins
+        printcolor("Current board <{}> pins number is {}, first pins number is {}".format(board_id, pin_number, len(board_pins)), 'red')
+        if len(board_pins) < pin_number:
+            last_pin = board_pins[-1]['pin_id']
+            while 1 <= retry:
+                #get ajax pin data
+                board_next_url = "http://huaban.com/boards/{}/?max={}&limit={}&wfl=1".format(board_id, last_pin, limit)
+                try:
+                    board_next_data = request.get(board_next_url).json()["board"]
+                except Exception,e:
+                    logging.error(e, exc_info=True)
+                    continue
+                else:
+                    board_pins += board_next_data["pins"]
+                    printcolor("ajax load board with pin_id {}, get pins number is {}, merged".format(last_pin, len(board_next_data["pins"])), "blue")
+                    if len(board_next_data["pins"]) < limit:
+                        break
+                    last_pin = board_next_data["pins"][-1]["pin_id"]
+                retry -= 1
+        board_pins = [ dict(pin_id=pin['pin_id'], suffix=pin['file']['type'].split('/')[-1], key=pin['file']['key'], board_id=board_id) for pin in board_pins ]
+        pool = ThreadPool()
+        pool.map(_download_img, board_pins)
+        pool.close()
+        pool.join()
+        printcolor("Current board {}, download over".format(board_id), "green")
 
-def DownloadPinImg(pin):
-    """ 下载单个pin图片 """
-    logging.debug("{}, start to download itself".format(pin))
-    url = "http://huaban.com/pins/%s/" %pin
+def _crawl_user_boards(user_id):
+    """ 查询user的画板 """
+    if not user_id:
+        return
+    retry = limit = 5
+    user_url = "http://huaban.com/{}".format(user_id)
     try:
-        r = requests.get(url, timeout=15, verify=False, headers=headers)
-        data  = re.findall(pindata_pat, r.text.encode('utf-8').split('\n')[-9].split('},')[0])[0]
-        HtmlPin, QianNiuKey, ImgType = data
-        # 有部分返回头返回的格式不标准，例如有 "jpeg,image/gif" ( -b 30628524 )，无法根据返回头创建文件，因此需要过滤
-        # by mingcheng 2017-02-27
-        if len(ImgType.split(",")) > 1:
-            ImgType = ImgType.split(",")[0]
-        logging.info((HtmlPin,QianNiuKey, len(QianNiuKey), ImgType))
+        #get first board data
+        r = request.get(user_url).json()
     except Exception,e:
         logging.error(e, exc_info=True)
     else:
-        if HtmlPin == pin:
-            ImgUrl = "http://img.hb.aicdn.com/%s_fw658" %QianNiuKey
-            try:
-                headers.update(Referer=url)
-                req = requests.get(ImgUrl, timeout=10, verify=False, headers=headers)
-            except Exception,e:
-                logging.warn(e, exc_info=True)
-            else:
-                imageName = "{}.{}".format(pin, ImgType)
-                with open(imageName, 'wb') as fp:
-                    fp.write(req.content)
-                print "Successful, pin: {}, save as {}".format(pin, imageName)
-                return True
+        if "user" in r:
+            user_data = r["user"]
         else:
-            print "Failed download, pin: {}".format(pin)
-    return False
+            print r.get("msg")
+            return
+        board_number = int(user_data['board_count'])
+        board_ids = user_data['boards']
+        printcolor("Current user <{}> boards number is {}, first boards number is {}".format(user_id, board_number, len(board_ids)), 'red')
+        if len(board_ids) < board_number:
+            last_board = user_data['boards'][-1]['board_id']
+            while 1 <= retry:
+                #get ajax pin data
+                user_next_url = "http://huaban.com/{}?jhhft3as&max={}&limit={}&wfl=1".format(user_id, last_board, limit)
+                try:
+                    user_next_data = request.get(user_next_url).json()["user"]
+                except Exception,e:
+                    logging.error(e, exc_info=True)
+                    continue
+                else:
+                    board_ids += user_next_data["boards"]
+                    printcolor("ajax load user with board_id {}, get boards number is {}, merged".format(last_board, len(user_next_data["boards"])), "blue")
+                    if len(user_next_data["boards"]) < limit:
+                        break
+                    last_board = user_next_data["boards"][-1]["board_id"]
+                retry -= 1
+        board_ids = map(str, [ board['board_id'] for board in board_ids ])
+        pool = ProcessPool()  #创建拥有5个进程数量的进程池
+        pool.map(_crawl_board, board_ids) #board_ids：要处理的数据列表； _crawl_board：处理列表中数据的函数
+        pool.close()#关闭进程池，不再接受新的进程
+        pool.join()#主进程阻塞等待子进程的退出
+        printcolor("Current user {}, download over".format(user_id), "green")
 
-def GetUserBoards(user, limit=10):
-    """ 查询user的画板, 默认limit=10, 表示最多下载10个画板, 虽然可能会下载不全, 但是此值不宜过大, 每个画板下载会开启一个进程, 过大会使系统崩溃 """
-
-    try:
-        r = requests.get("http://huaban.com/{}/?limit={}".format(user, limit))
-    except Exception,e:
-        logging.error(e, exc_info=True)
+def main(args):
+    print args
+    if not args.action:
+        parser.print_help()
+        return
+    action     = args.action or "getBoard"
+    user       = args.user
+    password   = args.password
+    version    = args.version
+    board_id   = args.board_id
+    user_id    = args.user_id
+    if version:
+        print "https://github.com/staugur/grab_huaban_board, v{}".format(__version__)
+        return
+    # 用户登录
+    if user and password:
+        auth = _post_login(user, password)
+        if not auth["success"]:
+            printcolor(auth["msg"], "yellow")
+            return
     else:
-        if r.status_code == 200:
-            try:
-                data =json.loads(r.text.split('app.page["user"] = ')[-1].split("app.route();")[0].split("app._csr")[0].strip(";\n"))
-            except Exception,e:
-                logging.error(e, exc_info=True)
-            else:
-                boards = [ _.get("board_id") for _ in data.get("boards") ]
-                logging.info("query user boards is {}".format(boards))
-                return boards
-        else:
-            return print_yellow("No such user {}".format(user))
+        printcolor("您未设置账号密码，将处于未登录状态，抓取的图片可能有限；设置账号密码后，图片抓取率可达99.99%！")
+    # 主要动作-功能
+    if action == "getBoard":
+        # 抓取单画板
+        _crawl_board(board_id)
+    elif action == "getUser":
+        # 抓取单用户
+        makedir(user_id)
+        os.chdir(user_id)
+        _crawl_user_boards(user_id)
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--board", help="The board id for Huanban.com")
-    parser.add_argument("-v", "--version", help="The version for grab_huaban_board project", action='store_true')
-    args       = parser.parse_args()
-    board      = args.board
-    version    = args.version
-    if version:
-        print "From https://github.com/staugur/grab_huaban_board,", __version__
-    elif board:
-        print BoardGetPins(board)
-    else:
-        parser.print_help()
+    parser.add_argument("-a", "--action", help="脚本动作 -> 1. getBoard: 抓取单画板(默认); 2. getUser: 抓取单用户")
+    parser.add_argument("-u", "--user", help="花瓣网账号-手机/邮箱")
+    parser.add_argument("-p", "--password", help="花瓣网账号对应密码")
+    parser.add_argument("-v", "--version", help="查看版本号", action='store_true')
+    parser.add_argument("--board_id", help="花瓣网单个画板id, action=getBoard时使用")
+    parser.add_argument("--user_id", help="花瓣网单个用户id, action=getUser时使用")
+    args = parser.parse_args()
+    main(args)
