@@ -132,6 +132,7 @@
                             var pins = [];
                             for(var i = 0, len = board_pins.length; i < len ; i++) {
                                 var pin = board_pins[i];
+                                console.log(pin);
                                 pins.push({imgUrl: "http://img.hb.aicdn.com/"+pin.file.key+"_fw658", imgName: pin.pin_id + "." + pin.file.split("/")[1]});
                             }
                             //交互确定下载方式
