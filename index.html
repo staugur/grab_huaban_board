@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://static.saintic.com/cdn/layer/3.1.1/layer.js"></script>
+    <script src="https://static.saintic.com/cdn/js/FileSaver.min.js"></script>
+    <script type="text/javascript">
+     /*
+      查看浏览器是否支持fileSaver下载功能
+     try {  
+      var isFileSaverSupported = !!new Blob;  
+} catch (e) {}  
+*/
+        const xhr = new XMLHttpRequest();
+        var url = 'http://127.0.0.1:5000/500x500-1.png';
+        xhr.open('GET', url, true);  
+        xhr.responseType = 'blob';  
+        xhr.onload = () => {
+          if (xhr.status === 200) {  
+            //将图片文件用浏览器中下载  
+            saveAs(xhr.response, "abc.jpg");  
+          }  
+        };  
+        xhr.send(); 
+    </script>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="400" height="200">
+      <script type="text/javascript">
+        layer.msg("ok");
+      </script>
+  </body>
+</html>
