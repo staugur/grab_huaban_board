@@ -4,9 +4,11 @@
 // @version      0.1
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
-// @match        http*://huaban.com/*
+// @match        http*://huaban.com/boards/*
 // @exclude      http*://huaban.com/pins/*
 // @require      https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js
+// @require      https://static.saintic.com/cdn/layer/3.1.1/layer.js
+// @require      https://static.saintic.com/cdn/js/FileSaver.min.js
 // @grant        GM_xmlhttpRequest
 // @license      MIT
 // @date         2018-05-23
@@ -19,8 +21,34 @@
     'use strict';
     //公共接口
     function isContains(str, substr) {
-        /* 判断str中是否包含substr */
+        /*判断str中是否包含substr*/
         return str.indexOf(substr) >= 0;
+    }
+    function saveImage(imgUrl, imgName) {
+        /*下载保存图片*/
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', imgUrl, true);
+            xhr.responseType = 'blob';
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    //将图片文件用浏览器中下载
+                    saveAs(xhr.response, imgName);
+                }
+            };
+            xhr.send();
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    function copyText(text) {
+        var oInput = document.createElement('input');
+        oInput.value = text;
+        document.body.appendChild(oInput);
+        oInput.select(); // 选择对象
+        document.execCommand("Copy"); // 执行浏览器复制命令
+        oInput.style.display='none';
+        layer.msg('复制成功');
     }
     //定位
     var d = document.getElementById('page').getElementsByClassName('action-buttons')[0];
@@ -32,8 +60,19 @@
     function downloadPicLocally(pins) {
         /*本地下载*/
     }
-    function downloadPicremotely(pins) {
+    function downloadPicRemotely(pins) {
         /*远端下载*/
+    }
+    function downloadPicThunder(pins) {
+        /*文本方式下载，比如迅雷*/
+        var tip = '<b>请点击复制按钮，粘贴到迅雷下载！</b><br/>', str = '';
+        for(var i = 0, len = pins.length; i < len ; i++) {
+            s += pins[i].imgUrl;
+        }
+        layer.alert(tip + str, {title: "文本方式下载", btn: '复制', btnAlign:'c', icon: 1, yes: function(index, layero){
+            copyText(str);
+            layer.close(index); //如果设定了yes回调，需进行手工关闭
+        }});
     }
     //监听点击下载事件
     document.getElementById("downloadBoard").onclick = function() {
@@ -58,7 +97,6 @@
                 async: false,
                 success: function(res) {
                     try {
-                        //var temp1 = JSON.parse(res.responseText);
                         console.log(res);
                         if (res.hasOwnProperty("board") === true) {
                             //主要部分
@@ -76,7 +114,6 @@
                                         type: "GET",
                                         async: false,
                                         success: function(res) {
-                                            //var temp2 = JSON.parse(res.responseText);
                                             console.log(res);
                                             var board_next_data = res.board;
                                             board_pins += board_next_data.pins;
@@ -92,6 +129,13 @@
                                 }
                             }
                             console.log(board_pins);
+                            var pins = [];
+                            for(var i = 0, len = board_pins.length; i < len ; i++) {
+                                var pin = board_pins[i];
+                                pins.push({imgUrl: "http://img.hb.aicdn.com/"+pin.file.key+"_fw658", imgName: pin.pin_id + "." + pin.file.split("/")[1]});
+                            }
+                            //交互确定下载方式
+                            downloadPicThunder(pins);
                         }
                     } catch (e) {
                         console.log(e);
