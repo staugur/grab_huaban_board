@@ -3,7 +3,7 @@
 
 __version__ = "5.0"
 __author__  = "Mr.tao"
-__doc__     = "http://www.saintic.com/blog/204.html"
+__doc__     = "https://www.saintic.com/blog/204.html"
 
 import re, os, sys, json, logging, requests
 from multiprocessing import Pool as ProcessPool
@@ -16,10 +16,10 @@ logging.basicConfig(level=logging.INFO,
                 datefmt='%Y-%m-%d %H:%M:%S',
                 filename='huaban.log',
                 filemode='a')
-debug = False
-basedir = os.path.dirname(os.path.abspath(__file__))
+debug = True
 request = requests.Session()
-request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'http://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36', 'Accept':'application/json'})
+request.verify = False
+request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'http://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
 
 def printcolor(msg, color=None):
     if color == "green":
@@ -45,7 +45,7 @@ def makedir(d):
 def _post_login(email, password):
     """登录函数"""
     res = dict(success=False)
-    url = "https://huaban.com/auth/"
+    url = "http://huaban.com/auth/"
     try:
         resp = request.post(url, data=dict(email=email, password=password), headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}).json()
     except Exception,e:
@@ -65,7 +65,7 @@ def _download_img(pin, retry=True):
     """
     if pin and isinstance(pin, dict) and "pin_id" in pin and "suffix" in pin and "key" in pin and "board_id" in pin:
         imgurl = "http://img.hb.aicdn.com/{}_fw658".format(pin["key"])
-        imgdir = os.path.join(basedir, pin['board_id'])
+        imgdir = pin['board_id']
         imgname = os.path.join(imgdir, '{}.{}'.format(pin["pin_id"], pin["suffix"]))
         if os.path.isfile(imgname):
             return
@@ -92,14 +92,15 @@ def _crawl_board(board_id):
     board_url = 'http://huaban.com/boards/{}/'.format(board_id)
     try:
         #get first pin data
-        r = request.get(board_url).json()
+        r = request.get(board_url, headers={'Accept-Encoding': ''}).json()
     except Exception,e:
+        printcolor("Crawl first page error, board_id: {}".format(board_id), "yellow")
         logging.error(e, exc_info=True)
     else:
         if "board" in r:
             board_data = r["board"]
         else:
-            print r.get("msg")
+            printcolor(r.get("msg"))
             return
         pin_number = board_data["pin_count"]
         board_pins = board_data["pins"]
@@ -128,7 +129,7 @@ def _crawl_board(board_id):
         pool.join()
         printcolor("Current board {}, download over".format(board_id), "green")
 
-def _crawl_user_boards(user_id):
+def _crawl_user(user_id):
     """ 查询user的画板 """
     if not user_id:
         return
@@ -138,12 +139,13 @@ def _crawl_user_boards(user_id):
         #get first board data
         r = request.get(user_url).json()
     except Exception,e:
+        printcolor("Crawl first page error, user_id: {}".format(user_id), "yellow")
         logging.error(e, exc_info=True)
     else:
         if "user" in r:
             user_data = r["user"]
         else:
-            print r.get("msg")
+            printcolor(r.get("msg"))
             return
         board_number = int(user_data['board_count'])
         board_ids = user_data['boards']
@@ -166,7 +168,7 @@ def _crawl_user_boards(user_id):
                     last_board = user_next_data["boards"][-1]["board_id"]
                 retry -= 1
         board_ids = map(str, [ board['board_id'] for board in board_ids ])
-        pool = ProcessPool()  #创建拥有5个进程数量的进程池
+        pool = ProcessPool()  #创建进程池
         pool.map(_crawl_board, board_ids) #board_ids：要处理的数据列表； _crawl_board：处理列表中数据的函数
         pool.close()#关闭进程池，不再接受新的进程
         pool.join()#主进程阻塞等待子进程的退出
@@ -184,7 +186,7 @@ def main(args):
     board_id   = args.board_id
     user_id    = args.user_id
     if version:
-        print "https://github.com/staugur/grab_huaban_board, v{}".format(__version__)
+        printcolor("https://github.com/staugur/grab_huaban_board, v{}".format(__version__))
         return
     # 用户登录
     if user and password:
@@ -197,12 +199,20 @@ def main(args):
     # 主要动作-功能
     if action == "getBoard":
         # 抓取单画板
+        if not board_id:
+            printcolor("请设置board_id参数", "yellow")
+            return
+        makedir("boards")
+        os.chdir("boards")
         _crawl_board(board_id)
     elif action == "getUser":
         # 抓取单用户
+        if not user_id:
+            printcolor("请设置user_id参数", "yellow")
+            return
         makedir(user_id)
         os.chdir(user_id)
-        _crawl_user_boards(user_id)
+        _crawl_user(user_id)
     else:
         parser.print_help()
 
