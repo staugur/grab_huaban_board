@@ -92,7 +92,7 @@ def _crawl_board(board_id):
     board_url = 'http://huaban.com/boards/{}/'.format(board_id)
     try:
         #get first pin data
-        r = request.get(board_url, headers={'Accept-Encoding': ''}).json()
+        r = request.get(board_url).json()
     except Exception,e:
         printcolor("Crawl first page error, board_id: {}".format(board_id), "yellow")
         logging.error(e, exc_info=True)
