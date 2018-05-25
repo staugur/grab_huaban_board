@@ -44,6 +44,7 @@ optional arguments:
 
 * 详细使用文档请参考：[https://www.saintic.com/blog/256.html](https://www.saintic.com/blog/256.html "https://www.saintic.com/blog/256.html")
 
+* 油猴脚本主页及安装地址：[请点击我](https://greasyfork.org/zh-CN/scripts/368427-%E8%8A%B1%E7%93%A3%E7%BD%91%E4%B8%8B%E8%BD%BD "请点击我")
 
 ## TODO
 1. --board_ids 多画板
