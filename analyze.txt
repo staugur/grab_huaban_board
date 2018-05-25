@@ -1,5 +1,7 @@
 
+一、对于python
 
+模仿ajax请求(header)
 s=requests.Session()
 s.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'https://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36', 'Accept':'application/json'})
 
@@ -8,7 +10,7 @@ s.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Re
 1. post
 https://huaban.com/auth/
 r1=s.post(url1, headers=headers)
-data = dict(email="staugur@live.com", password='')
+data = dict(email="", password='')
 headers["Content-type"] = "application/x-www-form-urlencoded; charset=UTF-8"
 错误密码时返回(JSON)： {"err":403,"msg":"用户密码错误"}
 正确时返回(JSON)：
@@ -46,6 +48,10 @@ last_board_id=data['boards'][-1]['board_id']
 https://huaban.com/staugur?jhhft3as&max=last_board_id&limit=10&wfl=1
 get 返回 json ['user']
 数据同1中
+
+
+二、对于js
+直接获取url中board_id，使用ajax访问首页及加载后续页即可获取所有json数据，拼接imgUrl通过不同下载方式保存图片即可。
 
 
 

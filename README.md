@@ -1,7 +1,13 @@
 # grab_huaban_board
 花瓣网多用户多画板爬虫
 
-## Usage
+
+## 解析
+
+* 查看analyze.txt
+
+
+## 使用
 
 ```
 git clone https://github.com/staugur/grab_huaban_board
@@ -31,16 +37,15 @@ optional arguments:
   --user_id USER_ID     花瓣网单个用户id, action=getUser时使用
 ```
 
-* 详细使用文档请参考: http://www.saintic.com/blog/204.html
-
-1. 
+* 详细使用文档请参考: [https://www.saintic.com/blog/204.html](https://www.saintic.com/blog/204.html "https://www.saintic.com/blog/204.html")
 
 
 ### for JavaScript
+
+* 详细使用文档请参考：[https://www.saintic.com/blog/256.html](https://www.saintic.com/blog/256.html "https://www.saintic.com/blog/256.html")
 
 
 ## TODO
 1. --board_ids 多画板
 2. --user_ids 多用户
 3. --igonre 指定忽略画板
-
