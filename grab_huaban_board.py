@@ -118,7 +118,7 @@ def _crawl_board(board_id):
                 else:
                     board_pins += board_next_data["pins"]
                     printcolor("ajax load board with pin_id {}, get pins number is {}, merged".format(last_pin, len(board_next_data["pins"])), "blue")
-                    if len(board_next_data["pins"]) < limit:
+                    if len(board_next_data["pins"]) == 0:
                         break
                     last_pin = board_next_data["pins"][-1]["pin_id"]
                 retry -= 1
@@ -163,7 +163,7 @@ def _crawl_user(user_id):
                 else:
                     board_ids += user_next_data["boards"]
                     printcolor("ajax load user with board_id {}, get boards number is {}, merged".format(last_board, len(user_next_data["boards"])), "blue")
-                    if len(user_next_data["boards"]) < limit:
+                    if len(user_next_data["boards"]) == 0:
                         break
                     last_board = user_next_data["boards"][-1]["board_id"]
                 retry -= 1
