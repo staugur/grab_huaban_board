@@ -5,7 +5,7 @@
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/boards/*
-// @require      https://static.saintic.com/cdn/js/FileSaver.min.js
+// @require      https://cdn.bootcss.com/FileSaver.js/2014-11-29/FileSaver.min.js
 // @grant        GM_setClipboard
 // @license      MIT
 // @date         2018-05-25
@@ -62,8 +62,8 @@
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
         addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
     });
-    const board_id = window.location.pathname.split('/')[1] === "boards" ? window.location.pathname.split('/')[2] : "";
-    const protocol = window.location.protocol;
+    var board_id = window.location.pathname.split('/')[1] === "boards" ? window.location.pathname.split('/')[2] : "";
+    var protocol = window.location.protocol;
     /*
         下载图片
     */
