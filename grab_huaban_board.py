@@ -122,6 +122,7 @@ def _crawl_board(board_id):
                         break
                     last_pin = board_next_data["pins"][-1]["pin_id"]
                 retry -= 1
+        #map(lambda pin: dict(pin_id=pin['pin_id'], suffix=pin['file']['type'].split('/')[-1], key=pin['file']['key'], board_id=board_id), board_pins)
         board_pins = [ dict(pin_id=pin['pin_id'], suffix=pin['file']['type'].split('/')[-1], key=pin['file']['key'], board_id=board_id) for pin in board_pins ]
         pool = ThreadPool()
         pool.map(_download_img, board_pins)

@@ -9,7 +9,9 @@
 // @exclude      http*://huaban.com/boards/*/edit/*
 // @exclude      http*://huaban.com/boards/*/followers/*
 // @exclude      http*://huaban.com/*/likes/*
+// @exclude      http*://huaban.com/*/pins/*
 // @exclude      http*://huaban.com/*/tags/*
+// @exclude      http*://huaban.com/*/followers/*
 // @exclude      http*://huaban.com/*/following/*
 // @require      https://cdn.bootcss.com/FileSaver.js/2014-11-29/FileSaver.min.js
 // @grant        GM_setClipboard
@@ -86,13 +88,13 @@
     }
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
-        addJS("https://cdn.bootcss.com/layer/3.1.0/layer.js");
+        addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
     });
     /*
         下载用户画板接口
     */
-    //交互确定下载方式
-    function interactive(board_id, pins) {
+    //交互确定画板下载方式
+    function interactiveBoard(board_id, pins) {
         var msg = [
             '<b>当前画板共抓取' + pins.length + '张图片！</b><small>提示: 只有登录后才可以抓取几乎所有图片哦。</small><br/>',
             '<b>请选择以下三种下载方式：</b><br/>',
@@ -163,11 +165,31 @@
             }
         });
     }
+    //交互确定用户下载方式
+    function interactiveUser(user_id, boards) {
+        console.log("交互" + user_id + ", with boards: " + boards);
+        var str = boards.map(function (board_id) {
+            return "请下载画板id为："+board_id+"<br>"
+        })
+        for (var i = 0, len = boards.length; i < len; i++) {
+            var board_id = boards[i];
+        }
+        layer.alert('当前下载的画板是: ' + board_id, {
+            title: "用户 " + user_id + " 交互提示",
+            closeBtn: false,
+            shadeClose: false,
+            shade: 0,
+            btn: ['开始下载', '跳过'],
+            btnAlign: 'c',
+            icon: 1,
+        }, function() {
+            downloadBoard(board_id);
+        });
+    }
     //画板解析与下载
     function downloadBoard(board_id) {
         if (board_id) {
-            var retry = 100,
-                limit = 100;
+            var limit = 100;
             //get first pin data
             $.ajax({
                 url: window.location.protocol + '//huaban.com/boards/' + board_id,
@@ -178,7 +200,8 @@
                         if (res.hasOwnProperty("board") === true) {
                             var board_data = res.board,
                                 pin_number = board_data.pin_count,
-                                board_pins = board_data.pins;
+                                board_pins = board_data.pins,
+                                retry = Math.ceil(pin_number / limit);
                             //console.log("Current board <" + board_id + "> pins number is " + pin_number + ", first pins number is " + board_pins.length);
                             if (board_pins.length < pin_number) {
                                 var last_pin = board_pins[board_pins.length - 1].pin_id;
@@ -187,13 +210,12 @@
                                     var board_next_url = window.location.protocol + "//huaban.com/boards/" + board_id + "/?max=" + last_pin + "&limit=" + limit + "&wfl=1";
                                     $.ajax({
                                         url: board_next_url,
-                                        type: "GET",
                                         async: false,
                                         success: function(res) {
                                             //console.log(res);
                                             var board_next_data = res.board;
                                             board_pins = board_pins.concat(board_next_data.pins);
-                                            console.log("ajax load board with pin_id " + last_pin + ", get pins number is " + board_next_data.pins.length + ", merged");
+                                            //console.log("ajax load board with pin_id " + last_pin + ", get pins number is " + board_next_data.pins.length + ", merged");
                                             if (board_next_data.pins.length === 0) {
                                                 retry = 0;
                                                 return false;
@@ -204,17 +226,15 @@
                                     retry -= 1;
                                 }
                             }
-                            //console.log("共抓取" + board_pins.length + "个pin");
-                            var pins = [];
-                            for (var i = 0, len = board_pins.length; i < len; i++) {
-                                var pin = board_pins[i];
-                                pins.push({
+                            console.log("共抓取" + board_pins.length + "个pin");
+                            var pins = board_pins.map(function(pin) {
+                                return {
                                     imgUrl: "http://img.hb.aicdn.com/" + pin.file.key + "_fw658",
                                     imgName: pin.pin_id + "." + pin.file.type.split("/")[1]
-                                });
-                            }
+                                };
+                            })
                             //交互确定下载方式
-                            interactive(board_id, pins);
+                            interactiveBoard(board_id, pins);
                         }
                     } catch (e) {
                         console.log(e);
@@ -224,7 +244,59 @@
         }
     }
     //用户解析与下载
-    function downloadUser(user_id) {}
+    function downloadUser(user_id) {
+        if (user_id) {
+            var limit = 10;
+            //get first board data
+            $.ajax({
+                url: window.location.protocol + '//huaban.com/' + user_id,
+                async: false,
+                success: function(res) {
+                    try {
+                        console.log(res);
+                        if (res.hasOwnProperty("user") === true) {
+                            var user_data = res.user,
+                                board_number = user_data.board_count,
+                                board_ids = user_data.boards,
+                                retry = Math.ceil(board_number / limit);
+                            console.log("Current user <" + user_id + "> boards number is " + board_number + ", first boards number is " + board_ids.length);
+                            if (board_ids.length < board_number) {
+                                var last_board = board_ids[board_ids.length - 1].board_id;
+                                while (1 <= retry) {
+                                    //get ajax board data
+                                    var user_next_url = window.location.protocol + "//huaban.com/" + user_id + "/?max=" + last_board + "&limit=" + limit + "&wfl=1";
+                                    $.ajax({
+                                        url: user_next_url,
+                                        async: false,
+                                        success: function(res) {
+                                            console.log(res);
+                                            var user_next_data = res.user.boards;
+                                            board_ids = board_ids.concat(user_next_data);
+                                            console.log("ajax load user with board_id " + last_board + ", get boards number is " + user_next_data.length + ", merged");
+                                            if (user_next_data.length === 0) {
+                                                retry = 0;
+                                                return false;
+                                            }
+                                            last_board = user_next_data[user_next_data.length - 1].board_id;
+                                        }
+                                    });
+                                    retry -= 1;
+                                }
+                            }
+                            console.log("共抓取" + board_ids.length + "个board");
+                            var boards = board_ids.map(function(board) {
+                                return board.board_id;
+                            });
+                            //交互确定下载方式
+                            interactiveUser(user_id, boards);
+                        }
+                    } catch (e) {
+                        console.log(e);
+                    }
+                }
+            });
+        }
+    }
     /*
         分出不同模块：用户、画板
     */
@@ -232,19 +304,32 @@
         //当前在画板地址下
         var board_id = window.location.pathname.split('/')[2];
         //定位
-        var ab = document.getElementById('page').getElementsByClassName('action-buttons')[0];
+        var pab = document.getElementById('page').getElementsByClassName('action-buttons')[0];
         //插入下载画板按钮
-        if (isContains(ab.innerText, "下载此画板") === false) {
-            ab.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadBoard" class="btn rbtn"><span class="text"> 下载此画板</span></a>');
+        if (isContains(pab.innerText, "下载此画板") === false) {
+            pab.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadBoard" class="btn rbtn"><span class="text"> 下载此画板</span></a>');
         }
         //监听画板点击下载事件
-        document.getElementById("downloadBoard").onclick = function() {};
+        document.getElementById("downloadBoard").onclick = function() {
+            downloadBoard(board_id);
+        };
     } else {
         //当前在用户主页下
         if (hasId("user_page") === true) {
             //根据user_page确定了是在用户主页
             var user_id = window.location.pathname.split('/')[1];
-            //根据user_id循环ajax查询出所有画板
+            if (arrayContains(["all", "discovery", "favorite", "categories", "apps", "about", "search", "activities", "settings", "users"], user_id) === false) {
+                //定位
+                var uab = document.getElementById('user_page').getElementsByClassName('action-buttons')[0];
+                //插入下载画板按钮
+                if (isContains(uab.innerText, "下载此用户") === false) {
+                    uab.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadUser" class="btn rbtn"><span class="text"> 下载此用户</span></a>');
+                }
+                //监听用户点击下载事件
+                document.getElementById("downloadUser").onclick = function() {
+                    downloadUser(user_id);
+                };
+            }
         }
     }
 })();
