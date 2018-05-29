@@ -5,6 +5,8 @@
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/boards/*
+// @exclude      http*://huaban.com/boards/*/followers/
+// @exclude      http*://huaban.com/boards/*/edit/
 // @require      https://cdn.bootcss.com/FileSaver.js/2014-11-29/FileSaver.min.js
 // @grant        GM_setClipboard
 // @license      MIT
