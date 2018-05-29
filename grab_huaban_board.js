@@ -5,8 +5,12 @@
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/boards/*
-// @exclude      http*://huaban.com/boards/*/followers/
-// @exclude      http*://huaban.com/boards/*/edit/
+// @match        http*://huaban.com/*
+// @exclude      http*://huaban.com/boards/*/edit/*
+// @exclude      http*://huaban.com/boards/*/followers/*
+// @exclude      http*://huaban.com/*/likes/*
+// @exclude      http*://huaban.com/*/tags/*
+// @exclude      http*://huaban.com/*/following/*
 // @require      https://cdn.bootcss.com/FileSaver.js/2014-11-29/FileSaver.min.js
 // @grant        GM_setClipboard
 // @license      MIT
@@ -26,7 +30,27 @@
         //str是否包含substr
         return str.indexOf(substr) >= 0;
     }
-    //下载保存图片
+    //数组是否包含某元素
+    function arrayContains(arr, obj) {
+        var i = arr.length;
+        while (i--) {
+            if (arr[i] === obj) {
+                return true;
+            }
+        }
+        return false;
+    }
+    //判断页面中id是否存在
+    function hasId(id) {
+        //有此id返回true，否则返回false
+        var element = document.getElementById(id);
+        if (element) {
+            return true
+        } else {
+            return false
+        }
+    }
+    //保存图片
     function saveImage(imgUrl, imgName) {
         //imgUrl: 图片地址; imgName: 保存的文件名
         try {
@@ -62,15 +86,13 @@
     }
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
-        addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
+        addJS("https://cdn.bootcss.com/layer/3.1.0/layer.js");
     });
-    var board_id = window.location.pathname.split('/')[1] === "boards" ? window.location.pathname.split('/')[2] : "";
-    var protocol = window.location.protocol;
     /*
-        下载图片
+        下载用户画板接口
     */
     //交互确定下载方式
-    function interactive(pins) {
+    function interactive(board_id, pins) {
         var msg = [
             '<b>当前画板共抓取' + pins.length + '张图片！</b><small>提示: 只有登录后才可以抓取几乎所有图片哦。</small><br/>',
             '<b>请选择以下三种下载方式：</b><br/>',
@@ -86,88 +108,69 @@
             shade: 0,
             btn: ['文本', '本地', '远程'],
             btnAlign: 'c',
-            btn3: function(index, layero) {
-                downloadPicRemotely(pins);
-            }
-        }, function(index, layero) {
-            downloadPicText(pins);
-        }, function(index) {
-            downloadPicLocally(pins);
-        });
-    }
-    //本地下载
-    function downloadPicLocally(pins) {
-        for (var i = 0, len = pins.length; i < len; i++) {
-            saveImage(pins[i].imgUrl, pins[i].imgName);
-        }
-    }
-    //远端下载
-    function downloadPicRemotely(pins) {
-        $.ajax({
-            url: "https://www.saintic.com/CrawlHuaban/",
-            type: "POST",
-            data: {
-                board_id: board_id,
-                pins: JSON.stringify(pins)
-            },
-            success: function(res) {
-                if (res.success === true) {
-                    var msg = "<b>下载任务已经提交！</b><br>根据画板图片数量，所需时间不等，请稍等数分钟后访问下载链接：<br><i><a href='" + res.downloadUrl + "' target='_blank'>" + res.downloadUrl + "</a></i><br>它将于" + res.expireTime + "过期，资源会被删除，请在那之前下载。";
-                    layer.alert(msg, {
-                        icon: 1,
-                        title: "温馨提示",
-                        btn: '我已知晓并复制下载链接',
-                        btnAlign: 'c'
-                    }, function(index) {
-                        layer.close(index);
-                        GM_setClipboard(res.downloadUrl);
-                        layer.msg("复制成功", {
-                            icon: 1
-                        });
-                    });
-                } else {
-                    layer.msg("第三方服务异常: " + res.msg);
-                }
-            }
-        });
-    }
-    //文本方式下载，比如迅雷、QQ旋风
-    function downloadPicText(pins) {
-        var tip = '<b>请点击复制按钮，粘贴到迅雷等下载！</b><br/>',
-            str = '';
-        for (var i = 0, len = pins.length; i < len; i++) {
-            str += pins[i].imgUrl + "\n";
-        }
-        layer.alert(tip + str, {
-            title: "文本方式下载",
-            btn: '复制',
-            btnAlign: 'c',
-            icon: 1,
-            yes: function(index, layero) {
-                layer.close(index);
-                GM_setClipboard(str);
-                layer.msg("复制成功", {
-                    icon: 1
+            btn3: function(index) {
+                //远端下载
+                $.ajax({
+                    url: "https://www.saintic.com/CrawlHuaban/",
+                    type: "POST",
+                    data: {
+                        board_id: board_id,
+                        pins: JSON.stringify(pins)
+                    },
+                    success: function(res) {
+                        if (res.success === true) {
+                            var msg = "<b>下载任务已经提交！</b><br>根据画板图片数量，所需时间不等，请稍等数分钟后访问下载链接：<br><i><a href='" + res.downloadUrl + "' target='_blank'>" + res.downloadUrl + "</a></i><br>它将于" + res.expireTime + "过期，资源会被删除，请在那之前下载。";
+                            layer.alert(msg, {
+                                icon: 1,
+                                title: "温馨提示",
+                                btn: '我已知晓并复制下载链接',
+                                btnAlign: 'c'
+                            }, function(index) {
+                                layer.close(index);
+                                GM_setClipboard(res.downloadUrl);
+                                layer.msg("复制成功", {
+                                    icon: 1
+                                });
+                            });
+                        } else {
+                            layer.msg("第三方服务异常: " + res.msg);
+                        }
+                    }
                 });
             }
+        }, function(index) {
+            //文本方式下载，比如迅雷、QQ旋风
+            layer.alert('<b>请点击复制按钮，粘贴到迅雷等下载！</b><br/>', {
+                title: "文本方式下载",
+                btn: '复制',
+                btnAlign: 'c',
+                icon: 1,
+                yes: function(index, layero) {
+                    var str = '';
+                    for (var i = 0, len = pins.length; i < len; i++) {
+                        str += pins[i].imgUrl + "\n";
+                    }
+                    GM_setClipboard(str);
+                    layer.msg("复制成功", {
+                        icon: 1
+                    });
+                }
+            });
+        }, function(index) {
+            //本地下载
+            for (var i = 0, len = pins.length; i < len; i++) {
+                saveImage(pins[i].imgUrl, pins[i].imgName);
+            }
         });
     }
-    //定位
-    var d = document.getElementById('page').getElementsByClassName('action-buttons')[0];
-    //插入下载画板按钮
-    if (isContains(d.innerText, "下载此画板") === false) {
-        d.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadBoard" class="btn rbtn"><span class="text"> 下载此画板</span></a>');
-    }
-    //监听点击下载事件
-    document.getElementById("downloadBoard").onclick = function() {
+    //画板解析与下载
+    function downloadBoard(board_id) {
         if (board_id) {
             var retry = 100,
-                limit = 100,
-                board_url = protocol + '//huaban.com/boards/' + board_id;
+                limit = 100;
             //get first pin data
             $.ajax({
-                url: board_url,
-                type: "GET",
+                url: window.location.protocol + '//huaban.com/boards/' + board_id,
                 async: false,
                 success: function(res) {
                     try {
@@ -181,7 +184,7 @@
                                 var last_pin = board_pins[board_pins.length - 1].pin_id;
                                 while (1 <= retry) {
                                     //get ajax pin data
-                                    var board_next_url = protocol + "//huaban.com/boards/" + board_id + "/?max=" + last_pin + "&limit=" + limit + "&wfl=1";
+                                    var board_next_url = window.location.protocol + "//huaban.com/boards/" + board_id + "/?max=" + last_pin + "&limit=" + limit + "&wfl=1";
                                     $.ajax({
                                         url: board_next_url,
                                         type: "GET",
@@ -211,7 +214,7 @@
                                 });
                             }
                             //交互确定下载方式
-                            interactive(pins);
+                            interactive(board_id, pins);
                         }
                     } catch (e) {
                         console.log(e);
@@ -219,5 +222,29 @@
                 }
             });
         }
-    };
+    }
+    //用户解析与下载
+    function downloadUser(user_id) {}
+    /*
+        分出不同模块：用户、画板
+    */
+    if (window.location.pathname.split('/')[1] === "boards") {
+        //当前在画板地址下
+        var board_id = window.location.pathname.split('/')[2];
+        //定位
+        var ab = document.getElementById('page').getElementsByClassName('action-buttons')[0];
+        //插入下载画板按钮
+        if (isContains(ab.innerText, "下载此画板") === false) {
+            ab.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadBoard" class="btn rbtn"><span class="text"> 下载此画板</span></a>');
+        }
+        //监听画板点击下载事件
+        document.getElementById("downloadBoard").onclick = function() {};
+    } else {
+        //当前在用户主页下
+        if (hasId("user_page") === true) {
+            //根据user_page确定了是在用户主页
+            var user_id = window.location.pathname.split('/')[1];
+            //根据user_id循环ajax查询出所有画板
+        }
+    }
 })();
