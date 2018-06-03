@@ -379,7 +379,7 @@
         if (hasId("user_page") === true) {
             //根据user_page确定了是在用户主页
             var user_id = window.location.pathname.split('/')[1];
-            if (arrayContains(["all", "discovery", "favorite", "categories", "apps", "about", "search", "activities", "settings", "users"], user_id) === false) {
+            if (arrayContains(["all", "discovery", "favorite", "categories", "apps", "about", "search", "activities", "settings", "users", "friends"], user_id) === false) {
                 //定位
                 var uab = document.getElementById('user_page').getElementsByClassName('action-buttons')[0];
                 //插入下载画板按钮
