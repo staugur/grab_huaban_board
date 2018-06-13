@@ -19,7 +19,7 @@
 // @date         2018-05-25
 // @modified     2018-05-30
 // @github       https://github.com/staugur/grab_huaban_board
-// @supportURL   https://github.com/staugur/grab_huaban_board/issues
+// @supportURL   https://www.saintic.com/blog/256.html
 // ==/UserScript==
 
 (function() {
