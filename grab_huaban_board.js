@@ -415,7 +415,10 @@
 	setInterval(function() {
 		if (window.location.href != initUrl) {
 			if (hasId("downloadBoard") === false && hasId("downloadUser") === false) {
-				window.location.reload();
+				console.log(window.location.pathname);
+				if (window.location.pathname.split('/')[1] != "pins") {
+					window.location.reload();
+				}
 			}
 		}
 	}, 1000);
