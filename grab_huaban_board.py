@@ -59,12 +59,12 @@ def _post_login(email, password):
     return res
 
 def _download_img(pin, retry=True):
-    """ 下载单个图片
+    """ 下载单个原图
     @param pin dict: pin的数据，要求： {'pin_id': xx, 'suffix': u'png|jpg|jpeg...', 'key': u'xxx-xx', 'board_id': xx}
     @param retry bool: 是否失败重试
     """
     if pin and isinstance(pin, dict) and "pin_id" in pin and "suffix" in pin and "key" in pin and "board_id" in pin:
-        imgurl = "http://img.hb.aicdn.com/{}_fw658".format(pin["key"])
+        imgurl = "http://hbimg.b0.upaiyun.com/{}".format(pin["key"])
         imgdir = pin['board_id']
         imgname = os.path.join(imgdir, '{}.{}'.format(pin["pin_id"], pin["suffix"]))
         if os.path.isfile(imgname):
