@@ -204,6 +204,7 @@
 					url: "https://www.saintic.com/CrawlHuaban/",
 					type: "POST",
 					data: {
+						board_total: pin_number,
 						board_id: board_id,
 						pins: JSON.stringify(pins)
 					},
