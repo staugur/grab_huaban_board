@@ -14,7 +14,7 @@
 // @date         2018-06-26
 // @modified     null
 // @github       https://github.com/staugur/grab_huaban_board/blob/master/grab_duitang_album.js
-// @supportURL   https://www.saintic.com/blog/259.html
+// @supportURL   https://www.saintic.com/blog/256.html
 // ==/UserScript==
 
 (function() {
@@ -105,7 +105,7 @@
             '1. <i>文本</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片地址按行显示，提供复制，粘贴至迅雷、QQ旋风等下载工具批量下载即可，推荐使用此方法。<br/>',
             '2. <i>本地</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片直接保存到硬盘中，由于是批量下载，所以浏览器设置中请关闭"下载前询问每个文件的保存位置"，并且允许浏览器下载多个文件的授权申请，以保证可以自动批量保存，否则每次保存时会弹出询问，对您造成困扰。<br/>',
             '3. <i>远程</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片将由远端服务器下载并压缩，提供压缩文件链接，直接下载此链接解压即可。<br/>',
-            '<br/><p><b>寻求帮助？</b><a href="https://www.saintic.com/blog/259.html" target="_blank" title="帮助文档" style="color: green;">请点击我！</a></p></div>'
+            '<br/><p><b>寻求帮助？</b><a href="https://www.saintic.com/blog/256.html" target="_blank" title="帮助文档" style="color: green;">请点击我！</a></p></div>'
         ].join('');
         layer.open({
             type: 1,
