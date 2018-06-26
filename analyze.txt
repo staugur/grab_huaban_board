@@ -1,4 +1,4 @@
-
+﻿
 一、对于python
 
 模仿ajax请求(header)
@@ -54,4 +54,5 @@ get 返回 json ['user']
 直接获取url中board_id，使用ajax访问首页及加载后续页即可获取所有json数据，拼接imgUrl通过不同下载方式保存图片即可。
 
 
-
+三、堆糖网
+利用ajax获取其接口数据，主要参数album_id,limit,start。
