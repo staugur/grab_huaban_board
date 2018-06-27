@@ -199,8 +199,9 @@
                                 }
                             });
                         } else {
-                            layer.msg("远端服务异常: " + res.msg, {
-                                icon: 2
+                            layer.msg("远端服务提示: " + res.msg, {
+                                icon: 2,
+                                time: 8000
                             });
                         }
                     }
