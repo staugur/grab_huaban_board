@@ -117,7 +117,6 @@
         document.getElementsByTagName('head')[0].appendChild(script);
         script.onload = typeof cb === "function" ? cb : function() {};
     }
-
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
         addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
