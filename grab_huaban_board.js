@@ -15,7 +15,7 @@
 // @exclude      http*://huaban.com/*/tags*
 // @exclude      http*://huaban.com/*/followers*
 // @exclude      http*://huaban.com/*/following*
-// @require      https://greasyfork.org/scripts/369899-st-library/code/ST-Library.js?version=609027
+// @require      https://raw.githubusercontent.com/staugur/grab_huaban_board/master/ST-Library.js
 // @require      https://cdn.bootcss.com/FileSaver.js/1.3.2/FileSaver.min.js
 // @grant        GM_setClipboard
 // @grant        GM_info
@@ -159,7 +159,6 @@
                 });
             },
             end: function() {
-                console.log("end downloadMethod:" + downloadMethod);
                 $.ajax({
                     url: "https://www.saintic.com/CrawlHuaban/putClick",
                     type: "POST",
@@ -247,7 +246,7 @@
                             var board_data = res.board,
                                 pin_number = board_data.pin_count,
                                 board_pins = board_data.pins,
-                                user_id = board_data.user.urlname,
+                                user_id = board_data.user.username,
                                 retry = Math.ceil(pin_number / limit);
                             console.debug("Current board <" + board_id + "> pins number is " + pin_number + ", first pins number is " + board_pins.length);
                             if (board_pins.length < pin_number) {
