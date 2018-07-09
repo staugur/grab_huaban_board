@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      0.5.4
+// @version      0.5.5
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/boards/*
@@ -37,15 +37,23 @@
         下载用户画板接口
     */
     //交互确定画板下载方式
-    function interactiveBoard(board_id, pins, pin_number) {
-        var msg = [
-            '<div style="padding: 20px;"><b>当前画板共' + pin_number + '张图片，抓取了' + pins.length + '张，抓取率：' + calculatePercentage(pins.length, pin_number) + '！</b><small>提示: 只有登录后才可以抓取几乎所有图片哦。</small><br/>',
-            '<b>请选择以下三种下载方式：</b><br/>',
-            '1. <i>文本</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片地址按行显示，提供复制，粘贴至迅雷、QQ旋风等下载工具批量下载即可，推荐使用此方法。<br/>',
-            '2. <i>本地</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片直接保存到硬盘中，由于是批量下载，所以浏览器设置中请关闭"下载前询问每个文件的保存位置"，并且允许浏览器下载多个文件的授权申请，以保证可以自动批量保存，否则每次保存时会弹出询问，对您造成困扰。<br/>',
-            '3. <i>远程</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片将由远端服务器下载并压缩，提供压缩文件链接，直接下载此链接解压即可。<br/>',
-            '<br/><p><b>寻求帮助？</b><a href="https://www.saintic.com/blog/256.html" target="_blank" title="帮助文档" style="color: green;">请点击我！</a></p></div>'
-        ].join('');
+    function interactiveBoard(board_id, pins, pin_number, user_id) {
+        /*
+            board_id int: 画板id
+            pins list: 包含所有程序加载到的图片数据
+            pin_number int: 这个画板总共有多少图片
+            user_id str: 这个画板所属的用户
+        */
+        console.log("user_id" + user_id);
+        var downloadMethod = 0,
+            msg = [
+                '<div style="padding: 20px;"><b>当前画板共' + pin_number + '张图片，抓取了' + pins.length + '张，抓取率：' + calculatePercentage(pins.length, pin_number) + '！</b><small>提示: 只有登录后才可以抓取几乎所有图片哦。</small><br/>',
+                '<b>请选择以下三种下载方式：</b><br/>',
+                '1. <i>文本</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片地址按行显示，提供复制，粘贴至迅雷、QQ旋风等下载工具批量下载即可，推荐使用此方法。<br/>',
+                '2. <i>本地</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片直接保存到硬盘中，由于是批量下载，所以浏览器设置中请关闭"下载前询问每个文件的保存位置"，并且允许浏览器下载多个文件的授权申请，以保证可以自动批量保存，否则每次保存时会弹出询问，对您造成困扰。<br/>',
+                '3. <i>远程</i>： <br/>&nbsp;&nbsp;&nbsp;&nbsp;即所有图片将由远端服务器下载并压缩，提供压缩文件链接，直接下载此链接解压即可。<br/>',
+                '<br/><p><b>寻求帮助？</b><a href="https://www.saintic.com/blog/256.html" target="_blank" title="帮助文档" style="color: green;">请点击我！</a></p></div>'
+            ].join('');
         layer.open({
             type: 1,
             title: "选择画板图片下载方式",
@@ -61,6 +69,7 @@
             },
             yes: function(index, layero) {
                 //文本方式下载，比如迅雷、QQ旋风
+                downloadMethod = 1;
                 layer.close(index);
                 layer.open({
                     type: 1,
@@ -89,6 +98,7 @@
             },
             btn2: function(index, layero) {
                 //本地下载
+                downloadMethod = 2;
                 layer.close(index);
                 pins.map(function(pin) {
                     saveImage(pin.imgUrl, pin.imgName);
@@ -96,6 +106,7 @@
             },
             btn3: function(index, layero) {
                 //远端下载
+                downloadMethod = 3;
                 layer.close(index);
                 $.ajax({
                     url: "https://www.saintic.com/CrawlHuaban/",
@@ -105,6 +116,7 @@
                         version: GM_info.script.version,
                         board_total: pin_number,
                         board_id: board_id,
+                        user_id: user_id,
                         pins: JSON.stringify(pins)
                     },
                     success: function(res) {
@@ -143,6 +155,22 @@
                                 time: 8000
                             });
                         }
+                    }
+                });
+            },
+            end: function() {
+                console.log("end downloadMethod:" + downloadMethod);
+                $.ajax({
+                    url: "https://www.saintic.com/CrawlHuaban/putClick",
+                    type: "POST",
+                    data: {
+                        site: 1,
+                        version: GM_info.script.version,
+                        total_number: pin_number,
+                        pin_number: pins.length,
+                        board_id: board_id,
+                        user_id: user_id,
+                        downloadMethod: downloadMethod
                     }
                 });
             }
@@ -219,6 +247,7 @@
                             var board_data = res.board,
                                 pin_number = board_data.pin_count,
                                 board_pins = board_data.pins,
+                                user_id = board_data.user.urlname,
                                 retry = Math.ceil(pin_number / limit);
                             console.debug("Current board <" + board_id + "> pins number is " + pin_number + ", first pins number is " + board_pins.length);
                             if (board_pins.length < pin_number) {
@@ -252,7 +281,7 @@
                                 };
                             })
                             //交互确定下载方式
-                            interactiveBoard(board_id, pins, pin_number);
+                            interactiveBoard(board_id, pins, pin_number, user_id);
                         }
                     } catch (e) {
                         console.error(e);
