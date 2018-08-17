@@ -1,20 +1,10 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      0.5.5
+// @version      0.5.6
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
-// @match        http*://huaban.com/boards/*
 // @match        http*://huaban.com/*
-// @exclude      http*://huaban.com/pins/*
-// @exclude      http*://huaban.com/boards/*/edit*
-// @exclude      http*://huaban.com/boards/*/followers*
-// @exclude      http*://huaban.com/boards/*/favorite*
-// @exclude      http*://huaban.com/*/likes*
-// @exclude      http*://huaban.com/*/pins*
-// @exclude      http*://huaban.com/*/tags*
-// @exclude      http*://huaban.com/*/followers*
-// @exclude      http*://huaban.com/*/following*
 // @require      https://cdn.bootcss.com/FileSaver.js/1.3.2/FileSaver.min.js
 // @grant        GM_setClipboard
 // @grant        GM_info
@@ -132,7 +122,6 @@
             pin_number int: 这个画板总共有多少图片
             user_id str: 这个画板所属的用户
         */
-        console.log("user_id" + user_id);
         var downloadMethod = 0,
             msg = [
                 '<div style="padding: 20px;"><b>当前画板共' + pin_number + '张图片，抓取了' + pins.length + '张，抓取率：' + calculatePercentage(pins.length, pin_number) + '！</b><small>提示: 只有登录后才可以抓取几乎所有图片哦。</small><br/>',
@@ -205,14 +194,16 @@
                         board_total: pin_number,
                         board_id: board_id,
                         user_id: user_id,
-                        pins: JSON.stringify(pins)
+                        pins: JSON.stringify(pins),
+                        email: getUrlQuery("email", "")
                     },
                     success: function(res) {
                         if (res.success === true) {
                             var msg = ['<div style="padding: 20px;"><b>下载任务已经提交！</b><br>根据画板图片数量，所需时间不等，请稍等数分钟后访问下载链接：<br><i><a href="',
                                 res.downloadUrl + '" target="_blank">',
                                 res.downloadUrl + '</a></i><br>它将于<b>',
-                                res.expireTime + '</b>过期，那时资源会被删除，请提前下载。</div>'
+                                res.expireTime + '</b>过期，那时资源会被删除，请提前下载。',
+                                res.tip + '</div>'
                             ].join("");
                             layer.open({
                                 type: 1,
@@ -461,14 +452,14 @@
                 }
             }
             if (isContains(bca.innerText, board_mobile_text) === false) {
-                bca.insertAdjacentHTML('afterEnd', '<a href="#" id="downloadBoard" class="btn rbtn" style="position:absolute;right:' + brpx + ';top:22px;"><span class="text"> ' + board_mobile_text + '</span></a>');
+                bca.insertAdjacentHTML('afterEnd', '<a href="javascript:;" id="downloadBoard" class="btn rbtn" style="position:absolute;right:' + brpx + ';top:22px;"><span class="text"> ' + board_mobile_text + '</span></a>');
             }
         } else {
             //当前是PC版
             var pab = document.getElementById('board_card').getElementsByClassName('action-buttons')[0];
             //插入下载画板按钮
             if (isContains(pab.innerText, board_text) === false) {
-                pab.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadBoard" class="btn rbtn"><span class="text"> ' + board_text + '</span></a>');
+                pab.insertAdjacentHTML('afterbegin', '<a href="javascript:;" id="downloadBoard" class="btn rbtn"><span class="text"> ' + board_text + '</span></a>');
             }
         }
         //监听画板点击下载事件

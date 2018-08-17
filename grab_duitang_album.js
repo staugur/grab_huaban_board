@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         堆糖网下载
 // @namespace    https://www.saintic.com/
-// @version      0.1.1
+// @version      0.1.2
 // @description  堆糖网(duitang.com)专辑图片批量下载到本地
 // @author       staugur
 // @match        http*://duitang.com/album/*
@@ -188,14 +188,16 @@
                         version: GM_info.script.version,
                         board_total: pin_number,
                         board_id: album_id,
-                        pins: JSON.stringify(pins)
+                        pins: JSON.stringify(pins),
+                        email: getUrlQuery("email", "")
                     },
                     success: function(res) {
                         if (res.success === true) {
                             var msg = ['<div style="padding: 20px;"><b>下载任务已经提交！</b><br>根据专辑图片数量，所需时间不等，请稍等数分钟后访问下载链接：<br><i><a href="',
                                 res.downloadUrl + '" target="_blank">',
                                 res.downloadUrl + '</a></i><br>它将于<b>',
-                                res.expireTime + '</b>过期，那时资源会被删除，请提前下载。</div>'
+                                res.expireTime + '</b>过期，那时资源会被删除，请提前下载。',
+                                res.tip + '</div>'
                             ].join("");
                             layer.open({
                                 type: 1,
