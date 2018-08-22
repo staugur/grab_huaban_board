@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      0.5.6
+// @version      0.5.7
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/*
@@ -165,7 +165,7 @@
                     yes: function(index, layero) {
                         layer.close(index);
                         GM_setClipboard(pins.map(function(pin) {
-                            return pin.imgUrl + "\n";
+                            return pin.imgUrl + pin.imgName.substring(pin.imgName.lastIndexOf(".")) + "\n";
                         }).join(""));
                         layer.msg("复制成功", {
                             icon: 1
