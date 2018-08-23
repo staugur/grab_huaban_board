@@ -29,7 +29,7 @@ def printcolor(msg, color=None):
     elif color == "yellow":
         print '\033[93m{}\033[0m'.format(str(msg))
     elif color == "red":
-        print '\033[95m{}\033[0m'.format(str(msg))
+        print '\033[91m{}\033[0m'.format(str(msg))
     else:
         print str(msg)
 
