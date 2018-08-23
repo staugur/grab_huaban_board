@@ -165,7 +165,7 @@
                     yes: function(index, layero) {
                         layer.close(index);
                         GM_setClipboard(pins.map(function(pin) {
-                            return pin.imgUrl + pin.imgName.substring(pin.imgName.lastIndexOf(".")) + "\n";
+                            return pin.imgUrl + "\n";
                         }).join(""));
                         layer.msg("复制成功", {
                             icon: 1
