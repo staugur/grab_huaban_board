@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         堆糖网下载
 // @namespace    https://www.saintic.com/
-// @version      0.1.2
+// @version      0.1.3
 // @description  堆糖网(duitang.com)专辑图片批量下载到本地
 // @author       staugur
 // @match        http*://duitang.com/album/*
@@ -220,6 +220,35 @@
                                     layer.msg("复制成功", {
                                         icon: 1
                                     });
+                                    if (!getUrlQuery("email", "")) {
+                                        layer.prompt({
+                                            title: '输入邮箱待下载完成后邮件提醒',
+                                            icon: 1,
+                                            shade: 0
+                                        }, function(value, index, elem) {
+                                            $.ajax({
+                                                url: "https://www.saintic.com/CrawlHuaban/putEgg",
+                                                type: "POST",
+                                                data: {
+                                                    downloadUrl: res.downloadUrl,
+                                                    email: value
+                                                },
+                                                success: function(res) {
+                                                    layer.close(index);
+                                                    if (res.success === true) {
+                                                        layer.msg(res.tip, {
+                                                            icon: 1
+                                                        });
+                                                    } else {
+                                                        layer.msg("远端服务提示: " + res.msg, {
+                                                            icon: 2,
+                                                            time: 8000
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    }
                                 }
                             });
                         } else {
