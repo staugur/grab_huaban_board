@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         花瓣网下载-临时修复版-meitu.cn专用
+// @name         花瓣网(meitu.cn修复版)下载
 // @namespace    https://www.saintic.com/
 // @version      0.5.11
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
