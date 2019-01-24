@@ -229,7 +229,7 @@
                                 closeBtn: false,
                                 shadeClose: false,
                                 shade: 0,
-                                area: '500px',
+                                area: '350px',
                                 btn: '我已知晓并复制下载链接',
                                 btnAlign: 'c',
                                 maxmin: true,
