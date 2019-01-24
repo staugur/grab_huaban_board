@@ -50,6 +50,22 @@ optional arguments:
 
 
 ## TODO
+
+*for grab_huaban_board.py*
+
 1. --board_ids 多画板
 2. --user_ids 多用户
 3. --igonre 指定忽略画板
+
+*for grab_huaban_board.js*
+
+1. 彩蛋-发送SMS
+2. 公告显示
+3. 按钮置灰
+点击下载的次数越多
+抓取的数量越少
+有的抓取了几张后下载自动停止
+
+
+
+
