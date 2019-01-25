@@ -37,12 +37,12 @@ optional arguments:
   --user_id USER_ID     花瓣网单个用户id, action=getUser时使用
 ```
 
-* 详细使用文档请参考: [https://www.saintic.com/blog/204.html](https://www.saintic.com/blog/204.html "https://www.saintic.com/blog/204.html")
+* 详细使用文档请参考: [https://blog.saintic.com/blog/204.html](https://blog.saintic.com/blog/204.html "https://blog.saintic.com/blog/204.html")
 
 
 ### for JavaScript(花瓣、堆糖)
 
-* 详细使用文档请参考：[https://www.saintic.com/blog/256.html](https://www.saintic.com/blog/256.html "https://www.saintic.com/blog/256.html")
+* 详细使用文档请参考：[https://blog.saintic.com/blog/256.html](https://blog.saintic.com/blog/256.html "https://blog.saintic.com/blog/256.html")
 
 * 花瓣网下载脚本主页及安装地址：[请点击我](https://greasyfork.org/zh-CN/scripts/368427-%E8%8A%B1%E7%93%A3%E7%BD%91%E4%B8%8B%E8%BD%BD "请点击我")
 
