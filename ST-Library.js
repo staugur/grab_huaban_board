@@ -91,3 +91,38 @@ function addJS(src, cb) {
     document.getElementsByTagName('head')[0].appendChild(script);
     script.onload = typeof cb === "function" ? cb : function() {};
 }
+//封装localStorage
+var storage = (function storage() {
+    var key = "grab_huaban_board";
+    var obj = window.localStorage;
+    if (!obj) {
+        console.error("浏览不支持localStorage");
+        return false;
+    }
+    //设置或跟新本地存储数据
+    function set(data) {
+        if (data) {
+            obj.setItem(key, JSON.stringify(data));
+        }
+    }
+    //获取本地存储数据
+    function get() {
+        var data = []
+        try {
+            data = JSON.parse(obj.getItem(key));
+        } catch (e) {
+
+        } finally {
+            return data;
+        }
+    }
+    var clear = function() {
+        //清除对象
+        obj.removeItem(key);
+    };
+    return {
+        set: set,
+        get: get,
+        clear: clear
+    };
+})();
