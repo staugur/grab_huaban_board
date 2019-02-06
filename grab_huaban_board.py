@@ -10,6 +10,7 @@ from multiprocessing import Pool as ProcessPool
 from multiprocessing.dummy import Pool as ThreadPool
 reload(sys)
 sys.setdefaultencoding('utf-8')
+BASE_URL = 'http://login.meiwu.co'
 
 logging.basicConfig(level=logging.INFO,
                 format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
@@ -19,7 +20,7 @@ logging.basicConfig(level=logging.INFO,
 debug = True
 request = requests.Session()
 request.verify = False
-request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': 'http://huaban.com', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
+request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': BASE_URL, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
 
 def printcolor(msg, color=None):
     if color == "green":
@@ -45,7 +46,7 @@ def makedir(d):
 def _post_login(email, password):
     """登录函数"""
     res = dict(success=False)
-    url = "http://huaban.com/auth/"
+    url = BASE_URL + "/auth/"
     try:
         resp = request.post(url, data=dict(email=email, password=password), headers={'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}).json()
     except Exception,e:
@@ -89,7 +90,7 @@ def _crawl_board(board_id):
     if not board_id:
         return
     retry = limit = 100
-    board_url = 'http://huaban.com/boards/{}/'.format(board_id)
+    board_url = BASE_URL + '/boards/{}/'.format(board_id)
     try:
         #get first pin data
         r = request.get(board_url).json()
@@ -109,7 +110,7 @@ def _crawl_board(board_id):
             last_pin = board_pins[-1]['pin_id']
             while 1 <= retry:
                 #get ajax pin data
-                board_next_url = "http://huaban.com/boards/{}/?max={}&limit={}&wfl=1".format(board_id, last_pin, limit)
+                board_next_url = BASE_URL + "/boards/{}/?max={}&limit={}&wfl=1".format(board_id, last_pin, limit)
                 try:
                     board_next_data = request.get(board_next_url).json()["board"]
                 except Exception,e:
@@ -135,7 +136,7 @@ def _crawl_user(user_id):
     if not user_id:
         return
     retry = limit = 5
-    user_url = "http://huaban.com/{}".format(user_id)
+    user_url = BASE_URL + "/{}".format(user_id)
     try:
         #get first board data
         r = request.get(user_url).json()
@@ -155,7 +156,7 @@ def _crawl_user(user_id):
             last_board = user_data['boards'][-1]['board_id']
             while 1 <= retry:
                 #get ajax pin data
-                user_next_url = "http://huaban.com/{}?jhhft3as&max={}&limit={}&wfl=1".format(user_id, last_board, limit)
+                user_next_url = BASE_URL + "/{}?jhhft3as&max={}&limit={}&wfl=1".format(user_id, last_board, limit)
                 try:
                     user_next_data = request.get(user_next_url).json()["user"]
                 except Exception,e:
