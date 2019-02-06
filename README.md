@@ -61,11 +61,9 @@ optional arguments:
 
 1. 彩蛋-发送SMS
 2. 公告显示
-3. 按钮置灰
-点击下载的次数越多
-抓取的数量越少
-有的抓取了几张后下载自动停止
+3. 按钮置灰（点击下载的次数越多、抓取的数量越少、有的抓取了几张后下载自动停止）
 4. 把画板或用户额外信息写入README.txt
 
 
-
+## 友情链接
+1. [MacOS GUI 备份程序](https://github.com/ZhuPeng/grab_huaban_board "MacOS GUI 备份程序")
