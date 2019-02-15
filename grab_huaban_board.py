@@ -89,7 +89,7 @@ def _crawl_board(board_id):
     """ 获取画板下所有pin """
     if not board_id:
         return
-    retry = limit = 100
+    limit = 100
     board_url = BASE_URL + '/boards/{}/'.format(board_id)
     try:
         #get first pin data
@@ -104,6 +104,7 @@ def _crawl_board(board_id):
             printcolor(r.get("msg"))
             return
         pin_number = board_data["pin_count"]
+        retry = 2 * pin_number / limit
         board_pins = board_data["pins"]
         printcolor("Current board <{}> pins number is {}, first pins number is {}".format(board_id, pin_number, len(board_pins)), 'red')
         if len(board_pins) < pin_number:
@@ -135,8 +136,8 @@ def _crawl_user(user_id):
     """ 查询user的画板 """
     if not user_id:
         return
-    retry = limit = 5
     user_url = BASE_URL + "/{}".format(user_id)
+    limit = 5
     try:
         #get first board data
         r = request.get(user_url).json()
@@ -150,6 +151,7 @@ def _crawl_user(user_id):
             printcolor(r.get("msg"))
             return
         board_number = int(user_data['board_count'])
+        retry = 2 * board_number / limit
         board_ids = user_data['boards']
         printcolor("Current user <{}> boards number is {}, first boards number is {}".format(user_id, board_number, len(board_ids)), 'red')
         if len(board_ids) < board_number:
