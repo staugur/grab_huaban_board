@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      0.6.2
+// @version      0.7.0
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/*
@@ -138,46 +138,114 @@
             minute.substring(minute.length - 2, minute.length);
     }
     //封装localStorage
-    var storage = (function storage() {
-        var key = "grab_huaban_board";
-        var obj = window.localStorage;
-        if (!obj) {
-            console.error("浏览不支持localStorage");
-            return false;
-        }
-        //设置或更新本地存储数据
-        function set(data) {
-            if (data) {
-                obj.setItem(key, JSON.stringify(data));
+    class StorageMix {
+
+        constructor(key) {
+            this.key = key;
+            this.obj = window.localStorage;
+            if (!this.obj) {
+                console.error("浏览不支持localStorage");
+                return false;
             }
         }
-        //获取本地存储数据
-        function get() {
-            var data = []
-            try {
-                data = JSON.parse(obj.getItem(key));
-            } catch (e) {
 
+        //设置或跟新本地存储数据
+        set(data) {
+            if (data) {
+                return this.obj.setItem(this.key, JSON.stringify(data));
+            }
+        }
+
+        //获取本地存储数据
+        get() {
+            var data = null;
+            try {
+                data = JSON.parse(this.obj.getItem(this.key));
+            } catch (e) {
+                console.error(e);
             } finally {
                 return data;
             }
         }
-        var clear = function() {
+
+        clear() {
             //清除对象
-            obj.removeItem(key);
-        };
-        return {
-            set: set,
-            get: get,
-            clear: clear
-        };
-    })();
+            return this.obj.removeItem(this.key);
+        }
+    }
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
         addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
     });
     //加载优化
     var loadingLayer = null;
+    /**
+     * 设置接收信息
+     * @param type 参数: mobile|email
+     */
+    function setupReceiveTo(type) {
+        var es = new StorageMix("grab_huaban_board_remind_email");
+        var ms = new StorageMix("grab_huaban_board_remind_mobile");
+        if (type === 'email') {
+            var title = '输入邮箱待下载完成后邮件提醒';
+            var isEmail = /^[\w.\-]+@(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,3}$/i;
+            var successCall = function(value, index, elem) {
+                if (!isEmail.test(value)) {
+                    layer.msg('请输入正确的邮箱地址');
+                    return;
+                }
+                layer.close(index);
+                es.set(value);
+                layer.msg('邮箱：' + value + '，设置成功！', {
+                    icon: 1
+                });
+            }
+            layer.prompt({
+                title: title,
+                value: es.get() || "",
+                icon: 1,
+                shade: 0
+            }, successCall);
+        } else if (type === 'mobile') {
+            var title = '输入手机号待下载完成后短信提醒';
+            var isMobile = /^1\d{10}$/i;
+            var successCall = function(value, index, elem) {
+                if (!isMobile.test(value)) {
+                    layer.msg('请输入正确的手机号');
+                    return;
+                }
+                layer.close(index);
+                ms.set(value);
+                layer.msg('手机号：' + value + '，设置成功！', {
+                    icon: 1
+                });
+            }
+            layer.prompt({
+                title: title,
+                value: ms.get() || "",
+                icon: 1,
+                shade: 0
+            }, successCall);
+        } else {
+            layer.msg('暂不支持此接收方式！');
+            return;
+        }
+    }
+    /**
+     * 读取接收信息值
+     * @param type 参数: mobile|email
+     */
+    function getReceiveBy(type) {
+        var str = '',
+            es = new StorageMix("grab_huaban_board_remind_email"),
+            ms = new StorageMix("grab_huaban_board_remind_mobile");
+        if (type === 'email') {
+            str = es.get();
+        } else if (type === 'mobile') {
+            str = ms.get();
+        }
+        return str;
+    }
     /*
         下载用户画板接口
     */
@@ -253,6 +321,9 @@
                 //远端下载
                 downloadMethod = 3;
                 layer.close(index);
+                // 提醒接收配置信息读取
+                var email = getUrlQuery("email", getReceiveBy('email'));
+                var mobile = getUrlQuery("sms", getReceiveBy('mobile'));
                 $.ajax({
                     url: "https://open.saintic.com/CrawlHuaban/",
                     type: "POST",
@@ -263,8 +334,8 @@
                         board_id: board_id,
                         user_id: user_id,
                         pins: JSON.stringify(pins),
-                        email: getUrlQuery("email", ""),
-                        sms: getUrlQuery("sms", "")
+                        email: email,
+                        sms: mobile
                     },
                     success: function(res) {
                         if (res.success === true) {
@@ -292,7 +363,14 @@
                                 yes: function(index, layero) {
                                     layer.close(index);
                                     GM_setClipboard(res.downloadUrl);
-                                    layer.msg("复制成功", {
+                                    var tips = '复制成功！';
+                                    if (email) {
+                                        tips += ' 接收提醒邮箱:' + email;
+                                    }
+                                    if (mobile) {
+                                        tips += ' 接收提醒手机:' + mobile;
+                                    }
+                                    layer.msg(tips, {
                                         icon: 1
                                     });
                                 }
@@ -513,6 +591,7 @@
                 if (res.code === 0) {
                     var notices = res.data;
                     if (notices.length > 0) {
+                        var storage = new StorageMix("grab_huaban_board");
                         var localIds = storage.get() || [];
                         var html = "";
                         notices.map(function(notice) {
@@ -561,7 +640,9 @@
         //当前在画板地址下
         var board_id = window.location.pathname.split('/')[2],
             board_text = "下载此画板",
-            board_mobile_text = "下载";
+            board_mobile_text = "下载",
+            setup_email_text = "配置提醒邮箱",
+            setup_mobile_text = "配置提醒手机号";
         if (isMobile && hasId("mobile_board_page")) {
             //当前是移动版
             var bca = document.getElementById('board_card').getElementsByTagName("a"),
@@ -584,7 +665,10 @@
             var pab = document.getElementById('board_card').getElementsByClassName('action-buttons')[0];
             //插入下载画板按钮
             if (isContains(pab.innerText, board_text) === false) {
-                pab.insertAdjacentHTML('afterbegin', '<a href="javascript:;" id="downloadBoard" class="btn rbtn"><span class="text"> ' + board_text + '</span></a>');
+                var tmpHtml = '<a href="javascript:;" id="setupEmailText" class="btn rbtn"><span class="text"> ' + setup_email_text + '</span></a>' +
+                    '<a href="javascript:;" id="setupMobileText" class="btn rbtn"><span class="text"> ' + setup_mobile_text + '</span></a>' +
+                    '<a href="javascript:;" id="downloadBoard" class="btn rbtn"><span class="text"> ' + board_text + '</span></a>';
+                pab.insertAdjacentHTML('afterbegin', tmpHtml);
             }
         }
         //监听画板点击下载事件
@@ -597,7 +681,9 @@
         //根据user_page确定了是在用户主页
         var user_id = window.location.pathname.split('/')[1],
             user_text = "下载此用户",
-            user_mobile_text = "下载";
+            user_mobile_text = "下载",
+            setup_email_text = "配置提醒邮箱",
+            setup_mobile_text = "配置提醒手机号";
         if (arrayContains(["all", "discovery", "favorite", "categories", "apps", "about", "search", "activities", "settings", "users", "friends", "partner", "message", "muse", "login", "signup", "go", "explore"], user_id) === false) {
             //排除以上数组中的二级目录
             if (isMobile && hasId("people_card")) {
@@ -622,7 +708,10 @@
                 var uca = document.getElementById('user_card').getElementsByClassName('action-buttons')[0];
                 //插入下载用户画板按钮
                 if (isContains(uca.innerText, user_text) === false) {
-                    uca.insertAdjacentHTML('afterbegin', '<a href="#" id="downloadUser" class="btn rbtn"><span class="text"> ' + user_text + '</span></a>');
+                    var tmpHtml = '<a href="javascript:;" id="setupEmailText" class="btn rbtn"><span class="text"> ' + setup_email_text + '</span></a>' +
+                        '<a href="javascript:;" id="setupMobileText" class="btn rbtn"><span class="text"> ' + setup_mobile_text + '</span></a>' +
+                        '<a href="javascript:;" id="downloadUser" class="btn rbtn"><span class="text"> ' + user_text + '</span></a>';
+                    uca.insertAdjacentHTML('afterbegin', tmpHtml);
                 }
             }
             //监听用户点击下载事件
@@ -632,6 +721,14 @@
                 downloadUser(user_id);
             };
         }
+    }
+    // 配置提醒邮箱
+    document.getElementById('setupEmailText').onclick = function() {
+        setupReceiveTo('email');
+    }
+    // 配置提醒手机号
+    document.getElementById('setupMobileText').onclick = function() {
+        setupReceiveTo('mobile');
     }
     //采用循环方式判断url变化
     setInterval(function() {
