@@ -382,8 +382,10 @@
     function downloadBoard(board_id) {
         if (board_id) {
             console.group("花瓣网下载-当前画板：" + board_id);
-            loadingLayer = layer.load(0);
-            var limit = 100;
+            var limit = 100,
+                loadingLayer = layer.load(0, {
+                    time: 1000
+                });
             //get first pin data
             $.ajax({
                 url: window.location.protocol + '//' + getEffectiveHost() + '/boards/' + board_id,
@@ -393,26 +395,17 @@
                         //console.log(res);
                         if (res.hasOwnProperty("board") === true) {
                             var board_data = res.board,
+                                //画板图片总数
                                 pin_number = board_data.pin_count,
                                 board_pins = board_data.pins,
                                 user_id = board_data.user.urlname,
-                                retry = Math.ceil(pin_number / limit);
-                            console.debug("Current board <" + board_id + "> pins number is " + pin_number + ", first pins number is " + board_pins.length);
-                            if (board_pins.length < pin_number) {
-                                var last_pin = board_pins[board_pins.length - 1].pin_id;
-                                var f = setInterval(function() {
-                                    if (retry < 0) {
-                                        console.log("画板" + board_id + "共抓取" + board_pins.length + "个pin");
-                                        var pins = board_pins.map(function(pin) {
-                                            return {
-                                                imgUrl: window.location.protocol + "//hbimg.b0.upaiyun.com/" + pin.file.key,
-                                                imgName: pin.pin_id + "." + pin.file.type.split("/")[1]
-                                            };
-                                        })
-                                        //交互确定下载方式
-                                        interactiveBoard(board_id, pins, pin_number, user_id);
-                                        clearInterval(f);
-                                    }
+                                //尝试向上取整，计算加载完画板图片需要的最大次数
+                                retry = board_pins.length < pin_number ? Math.ceil(pin_number / limit) : 0;
+                            console.debug("Current board <" + board_id + "> pins number is " + pin_number + ", first pins number is " + board_pins.length + ", retry is " + retry);
+                            var bf = setInterval(function() {
+                                if (retry > 0) {
+                                    //说明没有加载完画板图片，需要ajax请求
+                                    var last_pin = board_pins[board_pins.length - 1].pin_id;
                                     //get ajax pin data
                                     var board_next_url = window.location.protocol + "//" + getEffectiveHost() + "/boards/" + board_id + "/?max=" + last_pin + "&limit=" + limit + "&wfl=1";
                                     $.ajax({
@@ -431,8 +424,19 @@
                                         }
                                     });
                                     retry--;
-                                }, 200);
-                            }
+                                } else {
+                                    console.log("画板" + board_id + "共抓取" + board_pins.length + "个pin");
+                                    var pins = board_pins.map(function(pin) {
+                                        return {
+                                            imgUrl: window.location.protocol + "//hbimg.b0.upaiyun.com/" + pin.file.key,
+                                            imgName: pin.pin_id + "." + pin.file.type.split("/")[1]
+                                        };
+                                    })
+                                    //交互确定下载方式
+                                    interactiveBoard(board_id, pins, pin_number, user_id);
+                                    clearInterval(bf);
+                                }
+                            }, 200);
                         }
                     } catch (e) {
                         console.error(e);
@@ -458,21 +462,11 @@
                             var user_data = res.user,
                                 board_number = user_data.board_count,
                                 board_ids = user_data.boards,
-                                retry = Math.ceil(board_number / limit);
-                            console.debug("Current user <" + user_id + "> boards number is " + board_number + ", first boards number is " + board_ids.length);
-                            if (board_ids.length < board_number) {
-                                var last_board = board_ids[board_ids.length - 1].board_id;
-                                var f = setInterval(function() {
-                                    if (retry < 0) {
-                                        console.log("用户" + user_id + "共抓取" + board_ids.length + "个board");
-                                        var boards = board_ids.map(function(board) {
-                                            return board.board_id;
-                                        });
-                                        //交互确定下载方式
-                                        interactiveUser(user_id, boards, board_number);
-                                        clearInterval(f);
-                                    }
-
+                                retry = board_ids.length < board_number ? Math.ceil(board_number / limit) : 0;
+                            console.debug("Current user <" + user_id + "> boards number is " + board_number + ", first boards number is " + board_ids.length + ", retry is" + retry);
+                            var uf = setInterval(function() {
+                                if (retry > 0) {
+                                    var last_board = board_ids[board_ids.length - 1].board_id;
                                     //get ajax board data
                                     var user_next_url = window.location.protocol + "//" + getEffectiveHost() + "/" + user_id + "/?max=" + last_board + "&limit=" + limit + "&wfl=1";
                                     $.ajax({
@@ -491,8 +485,16 @@
                                         }
                                     });
                                     retry--;
-                                }, 200);
-                            }
+                                } else {
+                                    console.log("用户" + user_id + "共抓取" + board_ids.length + "个board");
+                                    var boards = board_ids.map(function(board) {
+                                        return board.board_id;
+                                    });
+                                    //交互确定下载方式
+                                    interactiveUser(user_id, boards, board_number);
+                                    clearInterval(uf);
+                                }
+                            }, 200);
                         }
                     } catch (e) {
                         console.error(e);
