@@ -10,7 +10,7 @@ from multiprocessing import Pool as ProcessPool
 from multiprocessing.dummy import Pool as ThreadPool
 reload(sys)
 sys.setdefaultencoding('utf-8')
-BASE_URL = 'http://login.meiwu.co'
+BASE_URL = 'http://huabanpro.com'
 
 logging.basicConfig(level=logging.INFO,
                 format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
