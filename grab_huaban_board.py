@@ -3,7 +3,7 @@
 
 __version__ = "5.0"
 __author__  = "Mr.tao"
-__doc__     = "https://www.saintic.com/blog/204.html"
+__doc__     = "https://blog.saintic.com/blog/204.html"
 
 import re, os, sys, json, logging, requests
 from multiprocessing import Pool as ProcessPool
@@ -178,7 +178,8 @@ def _crawl_user(user_id):
         pool.join()#主进程阻塞等待子进程的退出
         printcolor("Current user {}, download over".format(user_id), "green")
 
-def main(args):
+def main(parser):
+    args = parser.parse_args()
     if not args.action:
         parser.print_help()
         return
@@ -228,5 +229,4 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--version", help="查看版本号", action='store_true')
     parser.add_argument("--board_id", help="花瓣网单个画板id, action=getBoard时使用")
     parser.add_argument("--user_id", help="花瓣网单个用户id, action=getUser时使用")
-    args = parser.parse_args()
-    main(args)
+    main(parser)

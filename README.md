@@ -16,6 +16,8 @@ cd grab_huaban_board
 
 ### for Python
 
+基于python2.7
+
 1. pip install requests
 
 2. python grab_huaban_board.py
@@ -59,10 +61,7 @@ optional arguments:
 
 *for grab_huaban_board.js*
 
-1. 彩蛋-发送SMS
-2. 公告显示
-3. 按钮置灰（点击下载的次数越多、抓取的数量越少、有的抓取了几张后下载自动停止）
-4. 把画板或用户额外信息写入README.txt
+1. 把画板或用户额外信息写入README.txt
 
 
 ## 友情链接
