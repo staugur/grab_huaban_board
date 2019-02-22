@@ -62,7 +62,7 @@ optional arguments:
 *for grab_huaban_board.js*
 
 1. 把画板或用户额外信息写入README.txt
-
+2. 提醒按钮优化、清除缓存
 
 ## 友情链接
 1. [MacOS GUI 备份程序](https://github.com/ZhuPeng/grab_huaban_board "MacOS GUI 备份程序")
