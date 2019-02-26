@@ -514,14 +514,12 @@
                             closeBtn: false,
                             area: 'auto',
                             shade: 0,
-                            id: 'grab_huaban_board' //设定一个id，防止重复弹出
-                                ,
+                            id: 'grab_huaban_board', //设定一个id，防止重复弹出
                             resize: true,
                             maxmin: true,
                             btn: ['我知道了'],
                             btnAlign: 'c',
-                            moveType: 1 //拖拽模式，0或者1
-                                ,
+                            moveType: 1, //拖拽模式，0或者1
                             content: '<div style="padding: 30px; line-height: 22px; background-color: #393D49; color: #fff; font-weight: 300;">' + html + '</div>',
                             yes: function(index, layero) {
                                 layer.close(index);
