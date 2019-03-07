@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      1.0.0
+// @version      1.0.1
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/*
@@ -13,7 +13,7 @@
 // @icon         https://static.saintic.com/cdn/images/favicon-64.png
 // @license      BSD 3-Clause License
 // @date         2018-05-25
-// @modified     2019-03-22
+// @modified     2019-03-07
 // @github       https://github.com/staugur/grab_huaban_board/blob/master/grab_huaban_board.js
 // @supportURL   https://blog.saintic.com/blog/256.html
 // ==/UserScript==
@@ -223,23 +223,13 @@
                 var body = layer.getChildFrame('body', index);
                 body.context.getElementById("save_remind_email").onclick = function() {
                     var value = body.context.getElementById("set_remind_email").value;
-                    var isEmail = /^[\w.\-]+@(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,3}$/i;
-                    if (!isEmail.test(value)) {
-                        layer.msg('请输入正确的邮箱地址');
-                        return;
-                    }
                     setupReceiveTo("email", value);
-                    body.context.getElementById("overview_email").innerHTML = value;
+                    body.context.getElementById("overview_email").innerHTML = (value || '已清空');
                 }
                 body.context.getElementById("save_remind_mobile").onclick = function() {
                     var value = body.context.getElementById("set_remind_mobile").value;
-                    var isMobile = /^1\d{10}$/i;
-                    if (!isMobile.test(value)) {
-                        layer.msg('请输入正确的手机号');
-                        return;
-                    }
                     setupReceiveTo("mobile", value);
-                    body.context.getElementById("overview_mobile").innerHTML = value;
+                    body.context.getElementById("overview_mobile").innerHTML = (value || '已清空');
                 }
                 body.context.getElementById("reset_notice_status").onclick = function() {
                     var storage = new StorageMix("grab_huaban_board");
@@ -250,12 +240,8 @@
                 }
                 body.context.getElementById("save_remind_token").onclick = function() {
                     var value = body.context.getElementById("set_remind_token").value;
-                    if (!value) {
-                        layer.msg('请输入有效的密钥');
-                        return;
-                    }
                     setupReceiveTo("token", value);
-                    body.context.getElementById("overview_token").innerHTML = setStarHidden(value);
+                    body.context.getElementById("overview_token").innerHTML = (!value) ? '已清空' : setStarHidden(value);
                 }
                 body.context.getElementById("grab_setting_help").onclick = function() {
                     layer.open({
@@ -289,26 +275,45 @@
         var ts = new StorageMix("grab_huaban_board_token");
         if (type === 'email') {
             var isEmail = /^[\w.\-]+@(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,3}$/i;
-            if (!isEmail.test(value)) {
-                layer.msg('请输入正确的邮箱地址');
-                return;
+            if (value) {
+                if (!isEmail.test(value)) {
+                    layer.msg('请输入正确的邮箱地址');
+                    return;
+                }
+                es.set(value);
+                layer.msg('邮箱：' + value + '，设置成功！', {
+                    icon: 1
+                });
+            } else {
+                es.clear();
+                layer.msg('邮箱已清空！', {
+                    icon: 1
+                });
             }
-            es.set(value);
-            layer.msg('邮箱：' + value + '，设置成功！', {
-                icon: 1
-            });
         } else if (type === 'mobile') {
             var isMobile = /^1\d{10}$/i;
-            if (!isMobile.test(value)) {
-                layer.msg('请输入正确的手机号');
-                return;
-            }
-            ms.set(value);
-            layer.msg('手机号：' + value + '，设置成功！', {
-                icon: 1
-            });
-        } else if (type === 'token') {
             if (value) {
+                if (!isMobile.test(value)) {
+                    layer.msg('请输入正确的手机号');
+                    return;
+                }
+                ms.set(value);
+                layer.msg('手机号：' + value + '，设置成功！', {
+                    icon: 1
+                });
+            } else {
+                ms.clear();
+                layer.msg('手机号已清空！', {
+                    icon: 1
+                });
+            }
+        } else if (type === 'token') {
+            if (!value) {
+                ts.clear();
+                layer.msg('密钥已清空！', {
+                    icon: 1
+                });
+            } else {
                 ts.set(value);
                 layer.msg('密钥：' + value + '，设置成功！', {
                     icon: 1
@@ -335,7 +340,7 @@
         } else if (type === 'token') {
             str = ts.get();
         }
-        return str;
+        return str || "";
     }
     /*
         下载用户画板接口
@@ -426,8 +431,10 @@
                         user_id: user_id,
                         pins: JSON.stringify(pins),
                         email: email,
-                        sms: mobile,
-                        token: getReceiveBy('token')
+                        sms: mobile
+                    },
+                    beforeSend: function(request) {
+                        request.setRequestHeader("Authorization", "Token " + getReceiveBy('token'));
                     },
                     success: function(res) {
                         if (res.success === true) {
