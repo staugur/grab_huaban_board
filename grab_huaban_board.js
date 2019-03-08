@@ -604,9 +604,10 @@
                                 } else {
                                     console.log("画板" + board_id + "共抓取" + board_pins.length + "个pin");
                                     var pins = board_pins.map(function(pin) {
+                                        var suffix = (!pin.file.type) ? "png" : pin.file.type.split("/")[1];
                                         return {
                                             imgUrl: window.location.protocol + "//hbimg.b0.upaiyun.com/" + pin.file.key,
-                                            imgName: pin.pin_id + "." + pin.file.type.split("/")[1]
+                                            imgName: pin.pin_id + "." + suffix
                                         };
                                     })
                                     //交互确定下载方式
