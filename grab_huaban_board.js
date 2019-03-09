@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         花瓣网下载
 // @namespace    https://www.saintic.com/
-// @version      1.0.1
+// @version      1.0.2
 // @description  花瓣网(huaban.com)用户画板图片批量下载到本地
 // @author       staugur
 // @match        http*://huaban.com/*
@@ -13,7 +13,7 @@
 // @icon         https://static.saintic.com/cdn/images/favicon-64.png
 // @license      BSD 3-Clause License
 // @date         2018-05-25
-// @modified     2019-03-07
+// @modified     2019-03-09
 // @github       https://github.com/staugur/grab_huaban_board/blob/master/grab_huaban_board.js
 // @supportURL   https://blog.saintic.com/blog/256.html
 // ==/UserScript==
@@ -163,6 +163,7 @@
     }
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
+        $.noConflict();
         addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
     });
     //加载优化
@@ -420,7 +421,7 @@
                 // 提醒接收配置信息读取
                 var email = getUrlQuery("email", getReceiveBy('email'));
                 var mobile = getUrlQuery("sms", getReceiveBy('mobile'));
-                $.ajax({
+                jQuery.ajax({
                     url: "https://open.saintic.com/CrawlHuaban/",
                     type: "POST",
                     data: {
@@ -484,7 +485,7 @@
                 });
             },
             end: function() {
-                $.ajax({
+                jQuery.ajax({
                     url: "https://open.saintic.com/CrawlHuaban/putClick",
                     type: "POST",
                     data: {
@@ -564,7 +565,7 @@
                     time: 5000
                 });
             //get first pin data
-            $.ajax({
+            jQuery.ajax({
                 url: window.location.protocol + '//' + getEffectiveHost() + '/boards/' + board_id,
                 async: false,
                 success: function(res) {
@@ -585,7 +586,7 @@
                                     var last_pin = board_pins[board_pins.length - 1].pin_id;
                                     //get ajax pin data
                                     var board_next_url = window.location.protocol + "//" + getEffectiveHost() + "/boards/" + board_id + "/?max=" + last_pin + "&limit=" + limit + "&wfl=1";
-                                    $.ajax({
+                                    jQuery.ajax({
                                         url: board_next_url,
                                         async: false,
                                         success: function(res) {
@@ -630,7 +631,7 @@
             console.group("花瓣网下载-当前用户：" + user_id);
             var limit = 10;
             //get first board data
-            $.ajax({
+            jQuery.ajax({
                 url: window.location.protocol + '//' + getEffectiveHost() + '/' + user_id,
                 async: false,
                 success: function(res) {
@@ -647,7 +648,7 @@
                                     var last_board = board_ids[board_ids.length - 1].board_id;
                                     //get ajax board data
                                     var user_next_url = window.location.protocol + "//" + getEffectiveHost() + "/" + user_id + "/?max=" + last_board + "&limit=" + limit + "&wfl=1";
-                                    $.ajax({
+                                    jQuery.ajax({
                                         url: user_next_url,
                                         async: false,
                                         success: function(res) {
@@ -684,7 +685,7 @@
     }
     //获取公告接口
     function showNotice() {
-        $.ajax({
+        jQuery.ajax({
             url: "https://open.saintic.com/CrawlHuaban/notice?catalog=2",
             type: "GET",
             success: function(res) {
