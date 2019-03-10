@@ -144,6 +144,7 @@
     }
     //由于@require方式引入jquery时layer使用异常，故引用cdn中jquery v1.10.1；加载完成后引用又拍云中layer v3.1.1
     addJS("https://cdn.bootcss.com/jquery/1.10.1/jquery.min.js", function() {
+        $.noConflict();
         addJS("https://static.saintic.com/cdn/layer/3.1.1/layer.js");
     });
     //设置提醒弹框
@@ -391,7 +392,7 @@
                 // 提醒接收配置信息读取
                 var email = getUrlQuery("email", getReceiveBy('email'));
                 var mobile = getUrlQuery("sms", getReceiveBy('mobile'));
-                $.ajax({
+                jQuery.ajax({
                     url: "https://open.saintic.com/CrawlHuaban/",
                     type: "POST",
                     data: {
@@ -455,7 +456,7 @@
                 });
             },
             end: function() {
-                $.ajax({
+                jQuery.ajax({
                     url: "https://open.saintic.com/CrawlHuaban/putClick",
                     type: "POST",
                     data: {
@@ -478,7 +479,7 @@
             var limit = 100,
                 user_id = '';
             //get first pin data
-            $.ajax({
+            jQuery.ajax({
                 url: "https://www.duitang.com/napi/blog/list/by_album/?album_id=" + album_id + "&limit=" + limit + "&start=0&_=" + Math.round(new Date()),
                 async: false,
                 success: function(res) {
@@ -494,7 +495,7 @@
                                 var next_start = album_data.next_start;
                                 while (1 <= retry) {
                                     //get ajax pin data
-                                    $.ajax({
+                                    jQuery.ajax({
                                         url: "https://www.duitang.com/napi/blog/list/by_album/?album_id=" + album_id + "&limit=" + limit + "&start=" + next_start + "&_=" + Math.round(new Date()),
                                         async: false,
                                         success: function(res) {
@@ -535,7 +536,7 @@
     }
     //获取公告接口
     function showNotice() {
-        $.ajax({
+        jQuery.ajax({
             url: "https://open.saintic.com/CrawlHuaban/notice?catalog=3",
             type: "GET",
             success: function(res) {
