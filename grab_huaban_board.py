@@ -10,7 +10,7 @@ from multiprocessing import Pool as ProcessPool
 from multiprocessing.dummy import Pool as ThreadPool
 reload(sys)
 sys.setdefaultencoding('utf-8')
-BASE_URL = 'http://huabanpro.com'
+BASE_URL = 'http://huaban.com'
 
 logging.basicConfig(level=logging.INFO,
                 format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO,
                 filemode='a')
 debug = True
 request = requests.Session()
-request.verify = False
+request.verify = True
 request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': BASE_URL, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
 
 def printcolor(msg, color=None):
@@ -35,7 +35,6 @@ def printcolor(msg, color=None):
         print str(msg)
 
 def makedir(d):
-    d = str(d)
     if not os.path.exists(d):
         os.makedirs(d)
     if os.path.exists(d):
@@ -69,6 +68,8 @@ def _download_img(pin, retry=True):
         imgdir = pin['board_id']
         imgname = os.path.join(imgdir, '{}.{}'.format(pin["pin_id"], pin["suffix"]))
         if os.path.isfile(imgname):
+            if debug:
+                printcolor("Skip downloaded images: %s" %imgname)
             return
         try:
             makedir(imgdir)
@@ -199,7 +200,7 @@ def main(parser):
             printcolor(auth["msg"], "yellow")
             return
     else:
-        printcolor("您未设置账号密码，将处于未登录状态，抓取的图片可能有限；设置账号密码后，图片抓取率可达99.99%！")
+        printcolor("您未设置账号密码，将处于未登录状态，抓取的图片可能有限；设置账号密码后，图片抓取率大部分可达100%！")
     # 主要动作-功能
     if action == "getBoard":
         # 抓取单画板
@@ -223,7 +224,7 @@ def main(parser):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--action", help="脚本动作 -> 1. getBoard: 抓取单画板(默认); 2. getUser: 抓取单用户")
+    parser.add_argument("-a", "--action", default="getBoard", help="脚本动作 -> 1. getBoard: 抓取单画板(默认); 2. getUser: 抓取单用户")
     parser.add_argument("-u", "--user", help="花瓣网账号-手机/邮箱")
     parser.add_argument("-p", "--password", help="花瓣网账号对应密码")
     parser.add_argument("-v", "--version", help="查看版本号", action='store_true')
