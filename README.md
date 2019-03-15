@@ -58,10 +58,13 @@ optional arguments:
 1. --board_ids 多画板
 2. --user_ids 多用户
 3. --igonre 指定忽略画板
+4. But，以上todo暂无计划，py版目前只针对bug
 
 *for grab_huaban_board.js*
 
 1. 把画板或用户额外信息写入README.txt
+2. 下载的图片名优化，不单纯是pin
+3. 设置中添加反馈功能，直接发邮件
 
 ## 友情链接
 1. [MacOS GUI 备份程序](https://github.com/ZhuPeng/grab_huaban_board "MacOS GUI 备份程序")
