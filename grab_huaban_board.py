@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "5.0"
+__version__ = "5.0.1"
 __author__ = "Mr.tao"
 __doc__ = "https://blog.saintic.com/blog/204.html"
 
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Pool as ProcessPool
 import re
 import os
 import sys
 import json
 import logging
 import requests
-import random
+from random choice
+from time import sleep
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool as ProcessPool
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -120,7 +121,7 @@ def _crawl_board(board_id):
         # get first pin data
         r = request.get(board_url).json()
     except requests.ConnectionError:
-        request.headers.update({"User-Agent": random.choice(user_agent_list)})
+        request.headers.update({"User-Agent": choice(user_agent_list)})
         r = request.get(board_url).json()
     except Exception as e:
         printcolor("Crawl first page error, board_id: {}".format(board_id), "yellow")
@@ -159,6 +160,7 @@ def _crawl_board(board_id):
         pool.close()
         pool.join()
         printcolor("Current board {}, download over".format(board_id), "green")
+        return sleep(1)
 
 
 def _crawl_user(user_id):
@@ -171,7 +173,7 @@ def _crawl_user(user_id):
         # get first board data
         r = request.get(user_url).json()
     except requests.ConnectionError:
-        request.headers.update({"User-Agent": random.choice(user_agent_list)})
+        request.headers.update({"User-Agent": choice(user_agent_list)})
         r = request.get(user_url).json()
     except Exception as e:
         printcolor("Crawl first page error, user_id: {}".format(user_id), "yellow")
