@@ -11,7 +11,7 @@ import sys
 import json
 import logging
 import requests
-from random choice
+from random import choice
 from time import sleep
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Pool as ProcessPool
@@ -20,6 +20,8 @@ sys.setdefaultencoding('utf-8')
 
 # 花瓣网域名，目前应该设置为huaban.com，可使用http或https协议。
 BASE_URL = 'https://huaban.com'
+# 设置下载短暂停止时间，单位：秒
+SLEEP_TIME = 1
 
 logging.basicConfig(level=logging.INFO,
                     format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
@@ -160,7 +162,7 @@ def _crawl_board(board_id):
         pool.close()
         pool.join()
         printcolor("Current board {}, download over".format(board_id), "green")
-        return sleep(1)
+        sleep(SLEEP_TIME)
 
 
 def _crawl_user(user_id):
