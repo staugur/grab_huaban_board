@@ -50,21 +50,16 @@ optional arguments:
 
 * 堆糖网下载脚本主页及安装地址：[请点击我](https://greasyfork.org/zh-CN/scripts/369842-%E5%A0%86%E7%B3%96%E7%BD%91%E4%B8%8B%E8%BD%BD "请点击我")
 
+* 仓库地址：[GitHub](https://github.com/saintic/userscript)
+
 
 ## TODO
-
-*for grab_huaban_board.py*
 
 1. --board_ids 多画板
 2. --user_ids 多用户
 3. --igonre 指定忽略画板
 4. But，以上todo暂无计划，py版目前只针对bug
 
-*for grab_huaban_board.js*
-
-1. 把画板或用户额外信息写入README.txt
-2. 下载的图片名优化，不单纯是pin
-3. 设置中添加反馈功能，直接发邮件
 
 ## 友情链接
 1. [MacOS GUI 备份程序](https://github.com/ZhuPeng/grab_huaban_board "MacOS GUI 备份程序")
