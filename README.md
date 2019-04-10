@@ -16,7 +16,7 @@ cd grab_huaban_board
 
 ### for Python
 
-基于python2.7
+基于python2.7（您需要python环境，不谙此道者建议使用JS版，只需要浏览器即可）
 
 1. pip install requests
 
