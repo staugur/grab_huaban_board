@@ -52,6 +52,8 @@ optional arguments:
 
 * 仓库地址：[GitHub](https://github.com/saintic/userscript)
 
+* 当前仓库下有一个`gui_batchdownload.py`脚本用于这两个油猴脚本文本方式的批量下载，用以一定程度上避免迅雷等下载工具，文档是：[https://blog.saintic.com/blog/204.html](https://blog.saintic.com/blog/204.html "https://blog.saintic.com/blog/204.html")
+
 
 ## TODO
 
