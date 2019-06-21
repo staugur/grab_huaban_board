@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "5.0.1"
+__version__ = "5.0.2"
 __author__ = "Mr.tao"
 __doc__ = "https://blog.saintic.com/blog/204.html"
 
@@ -155,6 +155,8 @@ def _crawl_board(board_id):
                         break
                     last_pin = board_next_data["pins"][-1]["pin_id"]
                 retry -= 1
+                #减轻访问频率
+                sleep(SLEEP_TIME)
         #map(lambda pin: dict(pin_id=pin['pin_id'], suffix=pin['file']['type'].split('/')[-1], key=pin['file']['key'], board_id=board_id), board_pins)
         board_pins = [dict(pin_id=pin['pin_id'], suffix=pin['file'].get('type', "").split('/')[-1] or "png", key=pin['file']['key'], board_id=board_id) for pin in board_pins]
         pool = ThreadPool()
@@ -162,7 +164,6 @@ def _crawl_board(board_id):
         pool.close()
         pool.join()
         printcolor("Current board {}, download over".format(board_id), "green")
-        sleep(SLEEP_TIME)
 
 
 def _crawl_user(user_id):
@@ -207,6 +208,8 @@ def _crawl_user(user_id):
                         break
                     last_board = user_next_data["boards"][-1]["board_id"]
                 retry -= 1
+                #减轻访问频率
+                sleep(SLEEP_TIME)
         board_ids = map(str, [board['board_id'] for board in board_ids])
         pool = ProcessPool()  # 创建进程池
         pool.map(_crawl_board, board_ids)  # board_ids：要处理的数据列表； _crawl_board：处理列表中数据的函数
