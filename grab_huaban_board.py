@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-__version__ = "5.0.2"
+__version__ = "5.0.3"
 __author__ = "Mr.tao"
 __doc__ = "https://blog.saintic.com/blog/204.html"
 
@@ -22,6 +22,9 @@ sys.setdefaultencoding('utf-8')
 BASE_URL = 'https://huaban.com'
 # 设置下载短暂停止时间，单位：秒
 SLEEP_TIME = 1
+# 开启ip代理池
+WITH_IP_POOL = False
+IP_POOL_API = "http://118.24.52.95:5010/get/"
 
 logging.basicConfig(level=logging.INFO,
                     format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
@@ -29,7 +32,7 @@ logging.basicConfig(level=logging.INFO,
                     filename='huaban.log',
                     filemode='a')
 
-debug = True
+debug = False
 request = requests.Session()
 request.verify = True
 request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': BASE_URL, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
@@ -44,6 +47,19 @@ user_agent_list = [
     "Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15",
 ]
 
+def get_proxy():
+    resp = dict()
+    if WITH_IP_POOL is True:
+        try:
+            _ip_proxy = request.get(IP_POOL_API, timeout=5).text
+        except requests.exceptions.RequestException as e:
+            logging.warn(e, exc_info=True)
+        else:
+            if not (_ip_proxy.startswith("http://") or _ip_proxy.startswith("https://")):
+                _ip_proxy = "http://%s" % _ip_proxy
+            resp = { "http": _ip_proxy, "https": _ip_proxy }
+    logging.info("Start ip_proxy_pool, get result: %s" %resp)
+    return resp
 
 def printcolor(msg, color=None):
     if color == "green":
@@ -217,18 +233,24 @@ def _crawl_user(user_id):
         pool.join()  # 主进程阻塞等待子进程的退出
         printcolor("Current user {}, download over".format(user_id), "green")
 
-
 def main(parser):
+    global WITH_IP_POOL,IP_POOL_API,request,debug
     args = parser.parse_args()
     if not args.action:
         parser.print_help()
         return
-    action = args.action or "getBoard"
+    action = args.action
     user = args.user
     password = args.password
     version = args.version
     board_id = args.board_id
     user_id = args.user_id
+    if args.debug is True:
+        debug = True
+    if args.proxy is True:
+        WITH_IP_POOL = args.proxy
+        IP_POOL_API = args.proxy_apiurl or IP_POOL_API
+        request.proxies.update(get_proxy())
     if version:
         printcolor("https://github.com/staugur/grab_huaban_board, v{}".format(__version__))
         return
@@ -264,10 +286,13 @@ def main(parser):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--action", default="getBoard", help="脚本动作 -> 1. getBoard: 抓取单画板(默认); 2. getUser: 抓取单用户")
-    parser.add_argument("-u", "--user", help="花瓣网账号-手机/邮箱")
-    parser.add_argument("-p", "--password", help="花瓣网账号对应密码")
-    parser.add_argument("-v", "--version", help="查看版本号", action='store_true')
-    parser.add_argument("--board_id", help="花瓣网单个画板id, action=getBoard时使用")
-    parser.add_argument("--user_id", help="花瓣网单个用户id, action=getUser时使用")
+    parser.add_argument("-a", "--action", default="getBoard", help=u"脚本动作 -> getBoard: 抓取单画板(默认); getUser: 抓取单用户")
+    parser.add_argument("-u", "--user", help=u"花瓣网账号-手机/邮箱")
+    parser.add_argument("-p", "--password", help=u"花瓣网账号对应密码")
+    parser.add_argument("-v", "--version", help=u"查看版本号", action='store_true')
+    parser.add_argument("--board_id", help=u"花瓣网单个画板id, action=getBoard时使用")
+    parser.add_argument("--user_id", help=u"花瓣网单个用户id, action=getUser时使用")
+    parser.add_argument("--debug", help=u"开启debug输出", action='store_true')
+    parser.add_argument("--proxy", help=u"开启IP代理池", action='store_true')
+    parser.add_argument("--proxy_apiurl", help=u"IP代理池接口：开启IP代理池后，设置此选项使用非默认接口")
     main(parser)
