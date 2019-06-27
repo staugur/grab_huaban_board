@@ -24,7 +24,7 @@ BASE_URL = 'https://huaban.com'
 SLEEP_TIME = 1
 # 开启ip代理池
 WITH_IP_POOL = False
-IP_POOL_API = "http://118.24.52.95:5010/get/"
+IP_POOL_API = "https://open.saintic.com/proxy/get/"
 
 logging.basicConfig(level=logging.INFO,
                     format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
