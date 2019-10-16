@@ -42,7 +42,7 @@ optional arguments:
                         IP代理池接口：开启IP代理池后，设置此选项使用非默认接口
 ```
 
-*温馨提示：开启IP代理池，需要您使用proxy_apiurl设置一个能输出ip的接口！*
+* 温馨提示：开启IP代理池，需要您使用 `proxy_apiurl` 设置一个能输出ip的接口！
 
 * 详细使用文档请参考: [https://blog.saintic.com/blog/204.html](https://blog.saintic.com/blog/204.html "https://blog.saintic.com/blog/204.html")
 
@@ -57,7 +57,13 @@ optional arguments:
 
 * 仓库地址：[GitHub](https://github.com/saintic/userscript)
 
-* 当前仓库下有一个`gui_batchdownload.py`脚本用于这两个油猴脚本文本方式的批量下载，用以一定程度上避免迅雷等下载工具，文档是：[https://blog.saintic.com/blog/204.html](https://blog.saintic.com/blog/204.html "https://blog.saintic.com/blog/204.html")
+* 当前仓库下有一个`gui_batchdownload.py`脚本用于这两个油猴脚本文本方式的批量下载，用以一定程度上避免迅雷等下载工具。
+
+    - 环境： Windows，Py2.7
+
+    - 依赖： `pip install pyinstaller pywin32`
+
+    - 打包： `pyinstaller.exe -F gui_batchdownload.py -i logo.ico -w --version-file version_file.txt`
 
 
 ## TODO
