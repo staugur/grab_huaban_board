@@ -16,7 +16,7 @@ cd grab_huaban_board
 
 ### for Python
 
-基于python2.7（您需要python环境，不谙此道者建议使用JS版，只需要浏览器即可）
+基于python2.7（您需要python环境，不谙此道者建议使用JS版，只需要浏览器即可），测试性地支持py3
 
 1. pip install requests
 
@@ -34,15 +34,15 @@ optional arguments:
   -p PASSWORD, --password PASSWORD
                         花瓣网账号对应密码
   -v, --version         查看版本号
-  --board_id BOARD_ID   花瓣网单个画板id, action=getBoard时使用
-  --user_id USER_ID     花瓣网单个用户id, action=getUser时使用
+  -bid BOARD_ID, --board_id BOARD_ID   花瓣网单个画板id, action=getBoard时使用
+  -uid USER_ID, --user_id USER_ID      花瓣网单个用户id, action=getUser时使用
   --debug               开启debug输出
   --proxy               开启IP代理池
   --proxy_apiurl PROXY_APIURL
                         IP代理池接口：开启IP代理池后，设置此选项使用非默认接口
 ```
 
-*温馨提示：目前默认IP代理池接口，获取的代理IP质量较低，所以若开启IP代理池，强烈建议使用自己的代理池接口！*
+*温馨提示：开启IP代理池，需要您使用proxy_apiurl设置一个能输出ip的接口！*
 
 * 详细使用文档请参考: [https://blog.saintic.com/blog/204.html](https://blog.saintic.com/blog/204.html "https://blog.saintic.com/blog/204.html")
 

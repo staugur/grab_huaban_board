@@ -23,16 +23,20 @@ IP_POOL_API = "https://open.saintic.com/proxy/get/"
 # 调试输出
 DEBUG = False
 
-logging.basicConfig(level=logging.INFO,
-                    format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    filename='huaban.log',
-                    filemode='a')
+logging.basicConfig(
+    level=logging.INFO,
+    format='[ %(levelname)s ] %(asctime)s %(filename)s:%(threadName)s:%(process)d:%(lineno)d %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename='huaban.log',
+    filemode='a'
+)
 
 request = requests.Session()
 request.verify = True
-request.headers.update({'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': BASE_URL,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'})
+request.headers.update({
+    'X-Request': 'JSON', 'X-Requested-With': 'XMLHttpRequest', 'Referer': BASE_URL,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'
+})
 user_agent_list = [
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
