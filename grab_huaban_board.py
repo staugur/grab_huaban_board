@@ -66,15 +66,15 @@ def get_proxy():
 
 def printcolor(msg, color=None):
     if color == "green":
-        print('\033[92m{}\033[0m'.format(str(msg)))
+        print('\033[92m%s\033[0m' % msg)
     elif color == "blue":
-        print('\033[94m{}\033[0m'.format(str(msg)))
+        print('\033[94m%s\033[0m' % msg)
     elif color == "yellow":
-        print('\033[93m{}\033[0m'.format(str(msg)))
+        print('\033[93m%s\033[0m' % msg)
     elif color == "red":
-        print('\033[91m{}\033[0m'.format(str(msg)))
+        print('\033[91m%s\033[0m' % msg)
     else:
-        print(str(msg))
+        print(msg)
 
 
 def makedir(d):
