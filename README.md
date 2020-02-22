@@ -65,6 +65,39 @@ optional arguments:
 
     - 打包： `pyinstaller.exe -F gui_batchdownload.py -i logo.ico -w --version-file version_file.txt`
 
+## up2picbed
+
+这是一个将花瓣网画板图片上传到[picbed](https://github.com/staugur/picbed)的脚本。
+
+你需要用`grab_huaban_board.py`下载画板或用户，使用`up2picbed.py`上传画板或
+用户所有画板，这个脚本会增量上传（即自动跳过已经上传的文件，但此功能基于
+本地存储文件.up2picbed.dat且文件索引严格，如果删除dat文件则重传，如果文件名
+改变则重传）。
+
+```
+$ python ./up2picbed.py -h
+usage: up2picbed.py [-h] [-b] [-u] [--picbed-url PICBED_URL]
+                    [--picbed-token PICBED_TOKEN]
+                    board_or_user
+
+positional arguments:
+  board_or_user         画板ID或用户名
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -b, --board           上传画板，允许逗号选择多个，默认此项
+  -u, --user            上传单个用户下所有画板
+  --picbed-url PICBED_URL
+                        picbed的根域名
+  --picbed-token PICBED_TOKEN
+                        picbed的用户token
+```
+
+示例：
+
+1. 上传画板: `./up2picbed.py --picbed-url https://picbed.saintic.com --picbed-token Token 画板ID`
+
+2. 上传用户: `./up2picbed.py --picbed-url https://picbed.saintic.com --picbed-token Token -u 用户名`
 
 ## TODO
 

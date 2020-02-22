@@ -2,7 +2,7 @@
 # -*- coding: utf8 -*-
 
 __version__ = "5.0.4"
-__author__ = "Mr.tao"
+__author__ = "staugur"
 __doc__ = "https://blog.saintic.com/blog/204.html"
 
 import os
