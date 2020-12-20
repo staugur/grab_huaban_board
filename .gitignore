@@ -90,3 +90,5 @@ ENV/
 
 boards/
 .up2picbed.dat
+.up2picbed.dat.db
+myAutoUpload.sh
